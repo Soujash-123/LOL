@@ -205,29 +205,31 @@ def login():
             if not google_id or not email:
                 return jsonify({"error": "Missing required fields"}), 400
 
-            # Find user by google_id
-            user = users_collection.find_one({"auth_type": "google"})
-            if user:
-                key_doc = keys_collection.find_one({"user_id": user['user_id']})
-                if not key_doc:
-                    return jsonify({"error": "Invalid credentials"}), 401
-
-                fernet = get_fernet(key_doc['key'])
-                decrypted_role = decrypt_data(user['role'], fernet)
-                
-                # Set up session
-                session.permanent = True
-                session['user_id'] = user['user_id']
-                session['username'] = user['username']
-                session['role'] = decrypted_role
-                
-                logger.info(f"User logged in via Google: {user['username']}")
+            # Check if user exists in database
+            user = users_collection.find_one({"auth_type": "google", "email": email})
+            if not user:
                 return jsonify({
-                    "message": "Login successful",
-                    "redirect": url_for('dashboard')
-                }), 200
-            else:
-                return jsonify({"error": "No account found. Please sign up first."}), 401
+                    "error": "No account found. Please sign up first.",
+                    "redirect": url_for('signup')
+                }), 401
+
+            key_doc = keys_collection.find_one({"user_id": user['user_id']})
+            if not key_doc:
+                return jsonify({"error": "Invalid credentials"}), 401
+
+            fernet = get_fernet(key_doc['key'])
+            decrypted_role = decrypt_data(user['role'], fernet)
+
+            session.permanent = True
+            session['user_id'] = user['user_id']
+            session['username'] = user['username']
+            session['role'] = decrypted_role
+
+            logger.info(f"User logged in via Google: {user['username']}")
+            return jsonify({
+                "message": "Login successful",
+                "redirect": url_for('dashboard')
+            }), 200
 
         else:  # Regular email/password login
             username = data.get('username')
@@ -238,9 +240,11 @@ def login():
 
             user = users_collection.find_one({"username": username})
             if not user:
-                return jsonify({"error": "Invalid credentials"}), 401
+                return jsonify({
+                    "error": "No account found. Please sign up first.",
+                    "redirect": url_for('signup')
+                }), 401
 
-            # Check if user is registered with Google
             if user.get('auth_type') == 'google':
                 return jsonify({"error": "Please use Google Sign-in for this account"}), 400
 
@@ -269,6 +273,7 @@ def login():
     except Exception as e:
         logger.error(f"Login error: {str(e)}")
         return jsonify({"error": "An error occurred during login"}), 500
+
         
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
@@ -276,6 +281,15 @@ def signup():
         return render_template('signup.html')
     
     try:
+        meme_music_mapping = {
+            "dark": "metal",
+            "wholesome": "acoustic",
+            "sarcastic": "punk rock",
+            "dank": "lofi",
+            "edgy": "industrial",
+            "random": "electronic"
+        }
+
         # Check if the request is from Google Sign-in
         if request.is_json:
             data = request.get_json()
@@ -295,15 +309,21 @@ def signup():
             encryption_key = generate_key()
             fernet = get_fernet(encryption_key)
             
+            # Assign random meme preference
+            meme_preference = random.choice(list(meme_music_mapping.keys()))
+            music_preference = meme_music_mapping[meme_preference]
+            
             # Prepare user data for Google sign-in
             user = {
                 "user_id": user_id,
                 "username": username,
-                "email": encrypt_data(email, fernet),
+                "email": email,
                 "google_id": encrypt_data(google_id, fernet),
                 "photo_url": encrypt_data(photo_url, fernet) if photo_url else None,
                 "role": encrypt_data("User", fernet),
                 "auth_type": "google",
+                "meme_preference": encrypt_data(meme_preference, fernet),
+                "music_preference": encrypt_data(music_preference, fernet),
                 "created_at": datetime.utcnow()
             }
             
@@ -328,6 +348,9 @@ def signup():
             encryption_key = generate_key()
             fernet = get_fernet(encryption_key)
             
+            # Determine music preference based on meme preference
+            music_preference = meme_music_mapping.get(meme_preference, "unknown")
+            
             # Prepare user data for regular signup
             user = {
                 "user_id": user_id,
@@ -336,6 +359,7 @@ def signup():
                 "password": encrypt_data(hash_password(password), fernet),
                 "role": encrypt_data("User", fernet),
                 "meme_preference": encrypt_data(meme_preference, fernet) if meme_preference else None,
+                "music_preference": encrypt_data(music_preference, fernet),
                 "auth_type": "email",
                 "created_at": datetime.utcnow()
             }
@@ -377,6 +401,46 @@ def signup():
         return jsonify({
             "error": "An error occurred during signup"
         }), 500
+
+from flask import render_template, request
+import requests
+
+BASE_URL = "https://discoveryprovider2.audius.co"
+
+@app.route('/music-feed', methods=['GET'])
+@login_required
+def search_songs():
+    query = request.args.get('query', 'trending')
+
+    if query.lower() == "trending":
+        url = f"{BASE_URL}/v1/tracks/trending"
+    else:
+        url = f"{BASE_URL}/v1/tracks/search?query={query}"
+
+    response = requests.get(url)
+
+    if response.status_code == 200:
+        data = response.json()
+        results = []
+
+        for track in data.get("data", []):
+            track_id = track.get("id")
+            stream_url = f"{BASE_URL}/v1/tracks/{track_id}/stream"
+
+            results.append({
+                "id": track_id,
+                "title": track["title"],
+                "album": track.get("album", "N/A"),  # Audius API doesn't have albums
+                "artist": track["user"]["name"],
+                "genre": track.get("genre", "Unknown"),
+                "link": track.get("permalink", "#"),
+                "image": track.get("artwork", {}).get("150x150", ""),  # Fetch artwork
+                "stream_url": stream_url
+            })
+
+        return render_template('music-feed.html', songs=results, query=query)
+    else:
+        return render_template('music-feed.html', error="Failed to fetch data", songs=[], query=query)
     
 # Define keyword-based mapping to templates
 template_mapping = {
