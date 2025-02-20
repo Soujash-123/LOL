@@ -141,6 +141,7 @@
             height: 400px;
             border-radius: 1rem;
         }
+        
 
         .chat-window {
             position: fixed;
@@ -502,18 +503,46 @@ document.getElementById('reset-theme').addEventListener('click', () => {
 });
 
         // Music Feed
-        const musicFeed = document.querySelector('.music-feed');
-        const musicIframe = musicFeed.querySelector('iframe');
+const musicFeed = document.querySelector('.music-feed');
+const musicIframe = musicFeed.querySelector('iframe');
+const musicIcon = musicFeed.querySelector('.fa-music');
 
-        musicFeed.addEventListener('click', () => {
-            musicFeed.classList.toggle('expanded');
-            musicIframe.classList.toggle('hidden');
-            if (musicFeed.classList.contains('expanded')) {
-                musicFeed.querySelector('.fa-music').style.display = 'none';
-            } else {
-                musicFeed.querySelector('.fa-music').style.display = 'block';
-            }
-        });
+// Function to collapse the music feed
+function collapseMusicFeed() {
+    musicFeed.classList.remove('expanded');
+    musicIframe.classList.add('hidden');
+    musicIcon.style.display = 'block';
+}
+
+// Function to expand the music feed
+function expandMusicFeed() {
+    musicFeed.classList.add('expanded');
+    musicIframe.classList.remove('hidden');
+    musicIcon.style.display = 'none';
+}
+
+// Toggle music feed when clicking the button
+musicFeed.addEventListener('click', (e) => {
+    // Prevent this click from immediately triggering the document click handler
+    e.stopPropagation();
+    
+    if (!musicFeed.classList.contains('expanded')) {
+        expandMusicFeed();
+    }
+});
+
+// Add click event listener to the document
+document.addEventListener('click', (e) => {
+    // Check if the music feed is expanded and the click is outside the music feed
+    if (musicFeed.classList.contains('expanded') && !musicFeed.contains(e.target)) {
+        collapseMusicFeed();
+    }
+});
+
+// Prevent clicks inside the iframe from closing the music feed
+musicIframe.addEventListener('click', (e) => {
+    e.stopPropagation();
+});
 
         // Chat Window
         const chatWindow = document.querySelector('.chat-window');
