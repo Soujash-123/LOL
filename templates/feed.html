@@ -316,6 +316,11 @@
                 <i class="fas fa-users"></i>
                 <span>Matches</span>
             </a>
+            <!-- Add this inside the "space-y-1" div in the vertical navigation -->
+<a href="#" id="logout-button" class="nav-link">
+    <i class="fas fa-sign-out-alt"></i>
+    <span>Logout</span>
+</a>
         </div>
     </nav>
 
@@ -353,6 +358,33 @@
     </div>
     
     <script>
+    // Logout function
+async function logout() {
+    try {
+        const response = await fetch('/logout', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (response.ok) {
+            window.location.href = '/login'; // Redirect to login page
+        } else {
+            console.error('Logout failed');
+            alert('Failed to logout. Please try again.');
+        }
+    } catch (error) {
+        console.error('Error during logout:', error);
+        alert('Connection error during logout. Please try again.');
+    }
+}
+
+// Add this inside your DOMContentLoaded event listener
+document.getElementById('logout-button').addEventListener('click', (e) => {
+    e.preventDefault();
+    logout();
+});
     // Theme management
     const themeKeys = {
         primaryColor: '--primary-color',
