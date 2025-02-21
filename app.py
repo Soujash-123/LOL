@@ -17,6 +17,11 @@ import mimetypes
 import tempfile
 import random
 import requests
+from flask import render_template, request
+import requests
+
+BASE_URL = "https://discoveryprovider2.audius.co"
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -37,6 +42,7 @@ try:
     comments_collection = db['comments']
     connections_collection = db['connections']
     fs = GridFS(db)
+    posts_collection = db["posts"]
 
     # Create indexes
     users_collection.create_index('username', unique=True)
@@ -402,10 +408,6 @@ def signup():
             "error": "An error occurred during signup"
         }), 500
 
-from flask import render_template, request
-import requests
-
-BASE_URL = "https://discoveryprovider2.audius.co"
 
 @app.route('/music-feed', methods=['GET'])
 @login_required
@@ -542,167 +544,6 @@ def logout():
         logger.info(f"User logged out: {username}")
     return jsonify({"message": "Logged out successfully"}), 200
 
-from appwrite.client import Client
-from appwrite.services.storage import Storage
-from appwrite.input_file import InputFile
-from appwrite.id import ID
-from appwrite.exception import AppwriteException
-
-client = Client()
-client.set_endpoint('https://cloud.appwrite.io/v1')
-client.set_project('676da1890031e065fd98')
-client.set_key('standard_06bfc36e517c20846d9457968a6afcf30cb6a1a4dd8f1c74139d086c63c0094aefb4b684449f97de498bb1c219110d4f1704c8cb7d0cf5261d5aaf2363a39592eaaa0f7e5063b20c8b6615b5a77b0c9c55dd94957c5e67cfdba9014581f0b26ba07413caf8c8291f6dc5dab5b21dce221e65b39d749c9fbf78066f7f9fbdbddd')
-storage = Storage(client)
-PROJECT_ID = '676da1890031e065fd98'
-BUCKET_NAME = 'MACRO-Posts Bucket'
-
-def get_or_create_bucket():
-    """
-    Get existing bucket or create new one in Appwrite.
-    
-    Returns:
-        str: Bucket ID if successful, None if failed
-    """
-    try:
-        # List all buckets and check if ours exists
-        buckets = storage.list_buckets()
-        for bucket in buckets['buckets']:
-            if bucket['name'] == BUCKET_NAME:
-                logger.info(f"Found existing bucket: {bucket['$id']}")
-                return bucket['$id']
-        
-        # Create new bucket if not found
-        bucket = storage.create_bucket(
-            bucket_id=ID.unique(),
-            name=BUCKET_NAME,
-            permissions=['read("any")', 'write("any")'],
-            file_security=False,  # Allow public access to files
-            maximum_file_size=30_000_000  # 30MB limit
-        )
-        logger.info(f"Created new bucket: {bucket['$id']}")
-        return bucket['$id']
-        
-    except AppwriteException as e:
-        logger.error(f"Appwrite bucket error: {str(e)}")
-        return None
-    except Exception as e:
-        logger.error(f"Unexpected error in get_or_create_bucket: {str(e)}")
-        return None
-
-def upload_image(file):
-    """
-    Upload a file to Appwrite storage.
-    
-    Args:
-        file: FileStorage object from Flask request.files
-        
-    Returns:
-        dict: Contains file_id and file_url if successful, None if failed
-    """
-    try:
-        bucket_id = get_or_create_bucket()
-        if not bucket_id:
-            raise Exception("Failed to get or create bucket")
-        
-        # Ensure filename is secure
-        filename = secure_filename(file.filename)
-        
-        # Create a temporary file with proper extension
-        with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(filename)[1]) as temp_file:
-            file.save(temp_file.name)
-            
-            # Generate a unique file ID
-            file_id = ID.unique()
-            
-            # Upload to Appwrite
-            file_upload = storage.create_file(
-                bucket_id=bucket_id,
-                file_id=file_id,
-                file=InputFile.from_path(temp_file.name),
-                permissions=['read("any")']
-            )
-            
-            # Clean up temporary file
-            os.unlink(temp_file.name)
-        
-        # Generate public URL for the file
-        file_url = f"https://cloud.appwrite.io/v1/storage/buckets/{bucket_id}/files/{file_upload['$id']}/view?project={PROJECT_ID}&mode=admin"
-        
-        logger.info(f"File uploaded successfully: {file_id}")
-        return {
-            "file_id": file_upload['$id'],
-            "file_url": file_url
-        }
-        
-    except AppwriteException as e:
-        logger.error(f"Appwrite upload error: {str(e)}")
-        return None
-    except Exception as e:
-        logger.error(f"Unexpected error in upload_image: {str(e)}")
-        return None
-
-def get_files():
-    try:
-        bucket_id = get_or_create_bucket()
-        if not bucket_id:
-            raise Exception("Failed to get bucket")
-            
-        files = storage.list_files(bucket_id)
-        file_urls = []
-        for file in files['files']:
-            url = f"https://cloud.appwrite.io/v1/storage/buckets/{bucket_id}/files/{file['$id']}/view?project={PROJECT_ID}&mode=admin"
-            file_urls.append(url)
-        return file_urls
-    except Exception as e:
-        print(f"Error getting files: {str(e)}")
-        return []
-
-
-def upload_file(file_path, session, post_type, content=None):
-    """
-    Upload an image or audio file to MongoDB and store its metadata in the posts collection.
-
-    :param file_path: Path to the file to upload
-    :param session: Session dictionary containing 'user_id' and 'username'
-    :param post_type: Type of the post (e.g., 'image', 'audio', 'text', etc.)
-    :param content: Additional content or text related to the post
-    """
-    try:
-        if not os.path.exists(file_path):
-            raise FileNotFoundError(f"File not found: {file_path}")
-        
-        # Ensure session contains required fields
-        if 'user_id' not in session or 'username' not in session:
-            raise ValueError("Session must contain 'user_id' and 'username'.")
-
-        file_id = None
-        file_name = upload_image(file_path)
-        
-        # Read the file content and upload it to GridFS if file_path is provided
-        with open(file_path, 'rb') as file_data:
-            file_id = fs.put(file_data, filename=file_name, content_type=post_type)
-        
-        # Prepare the post metadata
-        post_metadata = {
-            "post_id": str(uuid.uuid4()),
-            "user_id": session['user_id'],
-            "username": session['username'],
-            "type": post_type,
-            "content": content if content else "",
-            "file_id": str(file_id) if file_id else None,
-            "created_at": datetime.utcnow(),
-            "likes": 0,
-            "comments": []
-        }
-        
-        # Insert metadata into the posts collection
-        posts_collection.insert_one(post_metadata)
-        logger.info(f"Post created successfully. Post ID: {post_metadata['post_id']}")
-        return post_metadata
-    
-    except Exception as e:
-        logger.error(f"Failed to upload file and create post: {str(e)}")
-        raise
 @app.route('/connect', methods=['POST'])
 @login_required
 def connect():
@@ -747,36 +588,23 @@ def connect():
 def catch_all(path):
     return app.send_static_file('index.html')
 # Posts routes
-@app.route('/posts', methods=['GET', 'POST'])
+
+"""@app.route('/posts', methods=['GET', 'POST'])
 @login_required
 def handle_posts():
     if request.method == 'GET':
         try:
-            # Get the last update timestamp if provided
             last_update = request.args.get('last_update', None)
-            user_id = session.get('user_id')  # Get the logged-in user ID
+            user_id = session.get('user_id')
             user_data = users_collection.find_one({"user_id": user_id})
             
             if not user_data:
                 return jsonify({"error": "User not found"}), 404
             
-            # Retrieve user's encryption key
-            key_doc = keys_collection.find_one({"user_id": user_id})
-            if not key_doc:
-                return jsonify({"error": "Encryption key not found"}), 401
-            
-            fernet = get_fernet(key_doc['key'])
-            
-            # Decrypt user's genre preference
-            encrypted_genre = user_data.get("meme_preferences", {}).get("genre", None)
-            user_genre_preference = decrypt_data(encrypted_genre, fernet) if encrypted_genre else None
-            
-            query = {}  # Fetch all posts without filtering by user_id
-            
+            query = {} 
             if last_update:
                 query['created_at'] = {'$gt': datetime.fromisoformat(last_update)}
             
-            # Retrieve all posts
             all_posts = list(posts_collection.find(query, {
                 '_id': 0,
                 'username': 1,
@@ -789,32 +617,10 @@ def handle_posts():
                 'user_id': 1
             }))
             
-            # Remove posts belonging to the logged-in user
             filtered_posts = [post for post in all_posts if post['user_id'] != user_id]
             
-            def preference_match(post):
-                post_user = users_collection.find_one({"user_id": post["user_id"]})
-                if not post_user:
-                    return 0
-                
-                # Retrieve and decrypt post creator's genre preference
-                key_doc = keys_collection.find_one({"user_id": post["user_id"]})
-                if not key_doc:
-                    return 0
-                
-                fernet = get_fernet(key_doc['key'])
-                encrypted_post_genre = post_user.get("meme_preferences", {}).get("genre", None)
-                post_genre_preference = decrypt_data(encrypted_post_genre, fernet) if encrypted_post_genre else None
-                
-                # Return 1 if genres match, else 0
-                return 1 if user_genre_preference and user_genre_preference == post_genre_preference else 0
-            
-            sorted_posts = sorted(filtered_posts, key=lambda post: preference_match(post), reverse=True)
-            
-            #print(sorted_posts)
-            # Send posts to the frontend
             return jsonify({
-                'posts': sorted_posts,
+                'posts': filtered_posts,
                 'last_update': datetime.now().isoformat()
             }), 200
         except Exception as e:
@@ -823,7 +629,6 @@ def handle_posts():
 
     elif request.method == 'POST':
         try:
-            # Validate request data
             post_type = request.form.get('type')
             content = request.form.get('content', '')
             file = request.files.get('post-file')
@@ -833,30 +638,31 @@ def handle_posts():
             if not post_type:
                 return jsonify({"error": "Post type is required"}), 400
 
-            # Check file type
             allowed_image_types = {'image/jpeg', 'image/png', 'image/gif'}
             allowed_audio_types = {'audio/mpeg', 'audio/wav', 'audio/mp3'}
+            allowed_video_types = {'video/mp4', 'video/mov', 'video/avi'}
             file_type = file.content_type
 
             if post_type == 'image' and file_type not in allowed_image_types:
                 return jsonify({"error": "Invalid image format"}), 400
             elif post_type == 'audio' and file_type not in allowed_audio_types:
                 return jsonify({"error": "Invalid audio format"}), 400
+            elif post_type == 'video' and file_type not in allowed_video_types:
+                return jsonify({"error": "Invalid video format"}), 400
 
-            # Upload file to Appwrite
-            upload_result = upload_image(file)
+            upload_result = upload(file, resource_type="auto")
             if not upload_result:
                 return jsonify({"error": "Failed to upload file"}), 500
 
-            # Create post in MongoDB
+            file_url = upload_result['secure_url']
+
             post_data = {
                 "post_id": str(uuid.uuid4()),
                 "user_id": session['user_id'],
                 "username": session['username'],
                 "type": post_type,
                 "content": content,
-                "file_url": upload_result['file_url'],
-                "file_id": upload_result['file_id'],
+                "file_url": file_url,
                 "created_at": datetime.utcnow(),
                 "likes": 0,
                 "likes_by": [],
@@ -865,51 +671,149 @@ def handle_posts():
 
             result = posts_collection.insert_one(post_data)
             if not result.inserted_id:
-                # If MongoDB insert fails, attempt to delete the uploaded file
-                try:
-                    delete_file_from_appwrite(upload_result['file_id'])
-                except Exception as e:
-                    logger.error(f"Failed to cleanup Appwrite file after MongoDB error: {str(e)}")
                 return jsonify({"error": "Failed to create post"}), 500
 
             post_data.pop('_id', None)
             logger.info(f"Post created successfully by {session['username']}")
-            return json.loads(json.dumps(post_data, default=mongo_json_serializer)), 201
+            return json.loads(json.dumps(post_data, default=str)), 201
 
         except Exception as e:
             logger.error(f"Error creating post: {str(e)}")
             return jsonify({"error": "An error occurred creating post"}), 500
+"""
+        
+import os
+import uuid
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
+import tempfile
+from datetime import datetime
+from werkzeug.utils import secure_filename
+from pymongo import MongoClient
+from gridfs import GridFS
+import logging
 
-@app.route('/feed', methods=['GET', 'POST'])
+# Configure Cloudinary
+cloudinary.config(
+    cloud_name="dyxjcp6yo",
+    api_key="822825747231535",
+    api_secret="REloY6Xf4r-i_TrHJfJFN36j-dU",
+    secure=True
+)
+
+
+
+
+# Logger Setup
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
+
+def upload_to_cloudinary(file, resource_type="image"):
+    """
+    Uploads an image, audio, or video file to Cloudinary.
+    
+    Args:
+        file: FileStorage object from Flask request.files or file path
+        resource_type: Type of file ('image', 'video', or 'raw')
+    
+    Returns:
+        dict: Contains file_id and file_url if successful, None if failed
+    """
+    try:
+        filename = secure_filename(file.filename) if hasattr(file, 'filename') else os.path.basename(file)
+        
+        with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(filename)[1]) as temp_file:
+            if hasattr(file, 'save'):
+                file.save(temp_file.name)
+            else:
+                with open(file, 'rb') as src_file:
+                    temp_file.write(src_file.read())
+        
+            upload_result = cloudinary.uploader.upload(temp_file.name, resource_type=resource_type)
+        
+        os.unlink(temp_file.name)  # Clean up temporary file
+        
+        return {
+            "file_id": upload_result["public_id"],
+            "file_url": upload_result["secure_url"]
+        }
+    except Exception as e:
+        logger.error(f"Cloudinary upload error: {str(e)}")
+        return None
+
+def upload_file(file_path, session, post_type, content=None):
+    """
+    Upload an image, audio, or video file to Cloudinary and store its metadata in MongoDB.
+    
+    Args:
+        file_path: Path to the file to upload
+        session: Session dictionary containing 'user_id' and 'username'
+        post_type: Type of the post (e.g., 'image', 'video', 'audio', 'text')
+        content: Additional content or text related to the post
+    
+    Returns:
+        dict: The metadata of the created post
+    """
+    try:
+        if not os.path.exists(file_path):
+            raise FileNotFoundError(f"File not found: {file_path}")
+        
+        if 'user_id' not in session or 'username' not in session:
+            raise ValueError("Session must contain 'user_id' and 'username'.")
+        
+        # Determine resource type for Cloudinary upload
+        resource_type = "video" if post_type == "video" else "image" if post_type == "image" else "raw"
+        upload_data = upload_to_cloudinary(file_path, resource_type=resource_type)
+        
+        if not upload_data:
+            raise Exception("Failed to upload file to Cloudinary")
+        
+        # Read file and store in GridFS
+        file_id = None
+        with open(file_path, 'rb') as file_data:
+            file_id = fs.put(file_data, filename=os.path.basename(file_path), content_type=post_type)
+        
+        # Prepare metadata
+        post_metadata = {
+            "post_id": str(uuid.uuid4()),
+            "user_id": session['user_id'],
+            "username": session['username'],
+            "type": post_type,
+            "content": content if content else "",
+            "file_id": str(file_id),
+            "file_url": upload_data["file_url"],
+            "created_at": datetime.utcnow(),
+            "likes": 0,
+            "comments": []
+        }
+        
+        # Insert into MongoDB
+        posts_collection.insert_one(post_metadata)
+        logger.info(f"Post created successfully. Post ID: {post_metadata['post_id']}")
+        return post_metadata
+    except Exception as e:
+        logger.error(f"Failed to upload file and create post: {str(e)}")
+        raise
+
+
+
+@app.route('/posts', methods=['GET', 'POST'])
 @login_required
 def handle_feed():
     if request.method == 'GET':
         try:
-            # Get the last update timestamp if provided
             last_update = request.args.get('last_update', None)
-            user_id = session.get('user_id')  # Get the logged-in user ID
+            user_id = session.get('user_id')
             user_data = users_collection.find_one({"user_id": user_id})
             
             if not user_data:
                 return jsonify({"error": "User not found"}), 404
             
-            # Retrieve user's encryption key
-            key_doc = keys_collection.find_one({"user_id": user_id})
-            if not key_doc:
-                return jsonify({"error": "Encryption key not found"}), 401
-            
-            fernet = get_fernet(key_doc['key'])
-            
-            # Decrypt user's genre preference
-            encrypted_genre = user_data.get("meme_preferences", {}).get("genre", None)
-            user_genre_preference = decrypt_data(encrypted_genre, fernet) if encrypted_genre else None
-            
-            query = {}  # Fetch all posts without filtering by user_id
-            
+            query = {}
             if last_update:
                 query['created_at'] = {'$gt': datetime.fromisoformat(last_update)}
             
-            # Retrieve all posts
             all_posts = list(posts_collection.find(query, {
                 '_id': 0,
                 'username': 1,
@@ -922,48 +826,17 @@ def handle_feed():
                 'user_id': 1
             }))
             
-            # Remove posts belonging to the logged-in user
             filtered_posts = [post for post in all_posts if post['user_id'] != user_id]
             
-            def preference_match(post):
-                post_user = users_collection.find_one({"user_id": post["user_id"]})
-                if not post_user:
-                    return 0
-                
-                # Retrieve and decrypt post creator's genre preference
-                key_doc = keys_collection.find_one({"user_id": post["user_id"]})
-                if not key_doc:
-                    return 0
-                
-                fernet = get_fernet(key_doc['key'])
-                encrypted_post_genre = post_user.get("meme_preferences", {}).get("genre", None)
-                post_genre_preference = decrypt_data(encrypted_post_genre, fernet) if encrypted_post_genre else None
-                
-                # Return 1 if genres match, else 0
-                return 1 if user_genre_preference and user_genre_preference == post_genre_preference else 0
-            
-            # Sort posts by preference match and get latest post per user
-            sorted_posts = sorted(filtered_posts, key=lambda post: (preference_match(post), post['created_at']), reverse=True)
-            
-            # Keep only the most recent post from each user
-            seen_users = set()
-            unique_user_posts = []
-            for post in sorted_posts:
-                if post['user_id'] not in seen_users:
-                    unique_user_posts.append(post)
-                    seen_users.add(post['user_id'])
-            print(unique_user_posts)
             return jsonify({
-                'posts': unique_user_posts,
+                'posts': filtered_posts,
                 'last_update': datetime.now().isoformat()
             }), 200
         except Exception as e:
-            logger.error(f"Error fetching posts: {str(e)}")
             return jsonify({"error": "An error occurred while fetching posts"}), 500
 
     elif request.method == 'POST':
         try:
-            # Validate request data
             post_type = request.form.get('type')
             content = request.form.get('content', '')
             file = request.files.get('post-file')
@@ -973,30 +846,30 @@ def handle_feed():
             if not post_type:
                 return jsonify({"error": "Post type is required"}), 400
 
-            # Check file type
             allowed_image_types = {'image/jpeg', 'image/png', 'image/gif'}
             allowed_audio_types = {'audio/mpeg', 'audio/wav', 'audio/mp3'}
+            allowed_video_types = {'video/mp4', 'video/mpeg', 'video/ogg'}
             file_type = file.content_type
 
             if post_type == 'image' and file_type not in allowed_image_types:
                 return jsonify({"error": "Invalid image format"}), 400
             elif post_type == 'audio' and file_type not in allowed_audio_types:
                 return jsonify({"error": "Invalid audio format"}), 400
+            elif post_type == 'video' and file_type not in allowed_video_types:
+                return jsonify({"error": "Invalid video format"}), 400
 
-            # Upload file to Appwrite
-            upload_result = upload_image(file)
+            upload_result = cloudinary.uploader.upload(file, resource_type="auto")
             if not upload_result:
                 return jsonify({"error": "Failed to upload file"}), 500
 
-            # Create post in MongoDB
             post_data = {
                 "post_id": str(uuid.uuid4()),
                 "user_id": session['user_id'],
                 "username": session['username'],
                 "type": post_type,
                 "content": content,
-                "file_url": upload_result['file_url'],
-                "file_id": upload_result['file_id'],
+                "file_url": upload_result['secure_url'],
+                "file_id": upload_result['public_id'],
                 "created_at": datetime.utcnow(),
                 "likes": 0,
                 "likes_by": [],
@@ -1005,21 +878,15 @@ def handle_feed():
 
             result = posts_collection.insert_one(post_data)
             if not result.inserted_id:
-                # If MongoDB insert fails, attempt to delete the uploaded file
-                try:
-                    delete_file_from_appwrite(upload_result['file_id'])
-                except Exception as e:
-                    logger.error(f"Failed to cleanup Appwrite file after MongoDB error: {str(e)}")
+                cloudinary.uploader.destroy(upload_result['public_id'])
                 return jsonify({"error": "Failed to create post"}), 500
 
             post_data.pop('_id', None)
-            logger.info(f"Post created successfully by {session['username']}")
-            return json.loads(json.dumps(post_data, default=mongo_json_serializer)), 201
+            return jsonify(post_data), 201
 
         except Exception as e:
-            logger.error(f"Error creating post: {str(e)}")
             return jsonify({"error": "An error occurred creating post"}), 500
-        
+
 
 @app.route('/files/<file_id>')
 def serve_file(file_id):

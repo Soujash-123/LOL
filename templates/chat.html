@@ -3,644 +3,316 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>L❤L - Chat</title>
+    <title>L❤L - Chats</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        
-        :root {
-            --primary-color: #60a5fa;
-            --primary-dark: #2563eb;
-            --secondary-color: #e2e8f0;
-            --background-color: #0f172a;
-            --navbar-color: rgba(15, 23, 42, 0.95);
-            --message-sent: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
-            --message-received: rgba(30, 41, 59, 0.8);
-            --transition: all 0.3s ease;
+        .heart-logo {
+            animation: heartbeat 1.5s infinite;
+            display: inline-block;
+            color: #FF1493;
         }
 
-        body {
-            font-family: 'Inter', sans-serif;
-            background: var(--background-color);
-            color: var(--secondary-color);
+        @keyframes heartbeat {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.3); }
         }
 
-        .glass-effect {
-            background: rgba(15, 23, 42, 0.8);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+        .gradient-bg {
+            background: linear-gradient(135deg, #FF69B4, #FF1493);
         }
 
-        .vertical-nav {
-            width: 240px;
-            height: 100vh;
-            position: fixed;
-            left: 0;
-            top: 0;
-            background: var(--navbar-color);
-            backdrop-filter: blur(10px);
-            transition: var(--transition);
-            z-index: 50;
-            box-shadow: 4px 0 15px rgba(0, 0, 0, 0.1);
+        .chat-container {
+            height: calc(100vh - 4rem);
         }
 
-        .nav-link {
-            position: relative;
-            transition: var(--transition);
-            padding: 1rem 1.5rem;
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            color: var(--secondary-color);
-            border-radius: 0.5rem;
-            margin: 0.25rem 0.75rem;
-        }
-
-        .nav-link:hover {
-            color: var(--primary-color);
-            background: rgba(96, 165, 250, 0.1);
-            transform: translateX(5px);
-        }
-
-        .nav-link.active {
-            color: var(--primary-color);
-            background: rgba(96, 165, 250, 0.15);
-            border-right: 3px solid var(--primary-color);
-        }
-
-        .chat-item {
-            padding: 1rem;
-            transition: var(--transition);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            cursor: pointer;
-        }
-
-        .chat-item:hover {
-            background: rgba(96, 165, 250, 0.1);
-        }
-
-        .chat-item.active-chat {
-            background: rgba(96, 165, 250, 0.15);
-            border-left: 3px solid var(--primary-color);
+        .messages-container {
+            height: calc(100vh - 12rem);
         }
 
         .message-bubble {
             max-width: 70%;
-            padding: 1rem;
-            border-radius: 1.25rem;
-            margin-bottom: 1rem;
-            position: relative;
-            animation: fadeIn 0.3s ease;
-        }
-
-        .message-bubble.sent {
-            background: var(--message-sent);
-            margin-left: auto;
-            border-bottom-right-radius: 0.25rem;
-        }
-
-        .message-bubble.received {
-            background: var(--message-received);
-            border-bottom-left-radius: 0.25rem;
-        }
-
-        .chat-input {
-            background: rgba(30, 41, 59, 0.8);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            transition: var(--transition);
         }
 
         .chat-input:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.2);
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(255, 20, 147, 0.5);
         }
 
-        .send-button {
-            background: var(--primary-color);
-            transition: var(--transition);
+        .active-chat {
+            background-color: rgba(255, 105, 180, 0.1);
         }
 
-        .send-button:hover:not(:disabled) {
-            background: var(--primary-dark);
-            transform: scale(1.05);
-        }
-
-        .user-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: var(--primary-color);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.2rem;
-            color: white;
-            transition: var(--transition);
-        }
-
-        .user-status {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            background: #10b981;
-            border: 2px solid var(--background-color);
-            position: absolute;
-            bottom: 0;
-            right: 0;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* Custom scrollbar */
-        ::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: rgba(15, 23, 42, 0.8);
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: var(--primary-color);
-            border-radius: 3px;
-        }
-
+        /* Responsive styles */
         @media (max-width: 768px) {
-            .vertical-nav {
-                transform: translateX(-100%);
-            }
-            
-            .vertical-nav.active {
-                transform: translateX(0);
+            .chat-container {
+                height: calc(100vh - 2rem);
             }
 
-            .main-content {
-                margin-left: 0 !important;
+            .mobile-nav {
+                display: none;
+                position: fixed;
+                top: 4rem;
+                left: 0;
+                right: 0;
+                background-color: #1a202c;
+                padding: 1rem;
+                z-index: 40;
             }
 
-            .chat-list-container {
+            .mobile-nav.show {
+                display: block;
+            }
+
+            .chat-list-mobile {
                 position: fixed;
                 left: 0;
-                top: 0;
+                top: 4rem;
+                bottom: 0;
                 width: 100%;
-                height: 100%;
-                z-index: 40;
+                z-index: 30;
                 transform: translateX(-100%);
-                transition: var(--transition);
+                transition: transform 0.3s ease-in-out;
+                background-color: #1a202c;
             }
 
-            .chat-list-container.active {
+            .chat-list-mobile.show {
                 transform: translateX(0);
             }
+
+            .chat-window-mobile {
+                position: fixed;
+                left: 0;
+                top: 4rem;
+                bottom: 0;
+                width: 100%;
+                z-index: 20;
+                background-color: #1a202c;
+            }
+
+            .messages-container {
+                height: calc(100vh - 14rem);
+            }
         }
-                        .theme-modal {
+        @keyframes heartbeat {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.3); }
+    }
+    
+    .heart-logo {
+        animation: heartbeat 1.5s infinite;
+        display: inline-block;
+        color: #ec4899;
+    }
+
+    .glass-card {
+        background: rgba(30, 41, 59, 0.7);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    }
+
+    .nav-link {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        transition: all 0.2s ease;
+        position: relative;
+    }
+    
+    .nav-link:hover {
+        background: rgba(255, 255, 255, 0.1);
+    }
+    
+    .nav-link i {
+        width: 1.5rem;
+        text-align: center;
+    }
+    
+    .nav-link::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 0;
+        height: 2px;
+        background: linear-gradient(135deg, #ec4899, #f43f5e);
+        transition: width 0.3s ease;
+    }
+    
+    .nav-link:hover::after {
+        width: 100%;
+    }
+
+    @media (max-width: 768px) {
+        .nav-link span {
             display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
         }
-
-        .theme-modal.active {
-            display: flex;
+        
+        .nav-link {
+            padding: 0.5rem;
         }
-
-        .theme-content {
-            width: 90%;
-            max-width: 400px;
-            padding: 2rem;
-            border-radius: 1rem;
-        }
-
-        .theme-button {
-            position: fixed;
-            right: 20px;
-            top: 20px;
-            z-index: 100;
-            width: 50px;
-            height: 50px;
-            border-radius: 25px;
-            background: var(--primary-color);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .theme-button:hover {
-            transform: rotate(30deg);
-        }
-
+    }
     </style>
 </head>
-<body>
-    <!-- Theme Button -->
-    <button class="theme-button">
-        <i class="fas fa-paint-brush"></i>
-    </button>
-
-    <!-- Theme Modal -->
-    <div class="theme-modal">
-        <div class="theme-content glass-effect">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="text-lg font-semibold">Customize Theme</h3>
-                <button class="close-theme text-gray-400 hover:text-white">
-                    <i class="fas fa-times"></i>
-                </button>
+<body class="bg-gray-900 text-white">
+    <!-- Navigation -->
+    <nav class="bg-gray-800 shadow-lg fixed w-full top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <h1 class="text-3xl font-bold">
+                        L<span class="heart-logo">❤</span>L
+                    </h1>
+                    <!-- Mobile menu button -->
+                    <button id="mobile-menu-button" class="ml-4 md:hidden">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <!-- Mobile chat list toggle -->
+                    <button id="chat-list-toggle" class="ml-4 md:hidden">
+                        <i class="fas fa-comments"></i>
+                    </button>
+                </div>
+                <!-- Desktop navigation -->
+                <div class="hidden md:flex items-center space-x-6">
+                    <a href="/feed" class="text-gray-300 hover:text-pink-500">
+                        <i class="fas fa-heart mr-2"></i>Feed
+                    </a>
+                    <a href="/dashboard" class="text-gray-300 hover:text-pink-500">
+                        <i class="fas fa-home mr-2"></i>Dashboard
+                    </a>
+                    <a href="/create" class="text-gray-300 hover:text-pink-500">
+                        <i class="fas fa-plus mr-2"></i>Create with AI
+                    </a>
+                    <a href="/chat" class="text-gray-300 hover:text-pink-500">
+                        <i class="fas fa-comments mr-2"></i>Chat
+                    </a>
+                    <a href="/list_connect" class="text-gray-300 hover:text-pink-500">
+                        <i class="fas fa-users mr-2"></i>Matches
+                    </a>
+                    <a href="#" onclick="navigateToProfile(event)" class="text-gray-300 hover:text-pink-500">
+                        <i class="fas fa-user mr-2"></i>Profile
+                    </a>
+                    <button onclick="logout()" class="text-gray-300 hover:text-pink-500">
+                        <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                    </button>
+                </div>
             </div>
-            <div class="space-y-6">
-                <div>
-                    <label class="block mb-2">Primary Color</label>
-                    <input type="color" id="primary-color" class="w-full h-10 rounded">
+        </div>
+        <!-- Mobile navigation menu -->
+        <div id="mobile-nav" class="mobile-nav md:hidden">
+            <a href="/feed" class="nav-link">
+                <i class="fas fa-heart"></i>Feed
+            </a>
+            <a href="/dashboard" class="nav-link">
+                <i class="fas fa-home"></i>Dashboard
+            </a>
+            <a href="/create" class="nav-link">
+                <i class="fas fa-plus"></i>Create with AI
+            </a>
+            <a href="/chat" class="nav-link">
+                <i class="fas fa-comments"></i>Chat
+            </a>
+            <a href="/list_connect" class="nav-link">
+                <i class="fas fa-users"></i>Matches
+            </a>
+            <a href="#" class="nav-link" onclick="navigateToProfile(event)">
+                <i class="fas fa-user"></i>Profile
+            </a>
+            <button onclick="logout()" class="nav-link" style="background: none; border: none; cursor: pointer; font-size: inherit; text-align: left; width: 100%;">
+                <i class="fas fa-sign-out-alt"></i>Logout
+            </button>
+        </div>
+    </nav>
+
+    <!-- Chat Interface -->
+    <div class="chat-container flex pt-16">
+        <!-- Chat List -->
+        <div class="chat-list-mobile md:relative md:w-1/3 bg-gray-900 border-r border-gray-800">
+            <div class="p-4 border-b border-gray-800">
+                <div class="relative">
+                    <input type="text" 
+                           id="chat-search" 
+                           placeholder="Search chats..." 
+                           class="w-full bg-gray-800 rounded-lg px-4 py-2 pl-10">
+                    <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
                 </div>
-                <div>
-                    <label class="block mb-2">Secondary Color</label>
-                    <input type="color" id="secondary-color" class="w-full h-10 rounded">
+            </div>
+            <div id="chat-list" class="overflow-y-auto h-full">
+                <!-- Chat list items will be populated from chat_users -->
+                {% for chat in chat_users %}
+                <div class="chat-item p-4 border-b border-gray-800 hover:bg-gray-800 cursor-pointer" 
+                     onclick="loadChat('{{ chat._id }}')"
+                     data-chat-id="{{ chat._id }}"
+                     data-user-id="{{ chat.user_id }}"
+                     data-dest-user-id="{{ chat.dest_user_id }}">
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="ml-4 flex-1">
+                            <div class="flex justify-between">
+                                <h3 class="font-bold">
+                                    {% if chat.user_id == session.user_id %}
+                                        {{ chat.dest_user_username }}
+                                    {% else %}
+                                        {{ chat.user_username }}
+                                    {% endif %}
+                                </h3>
+                                <span class="text-sm text-gray-400">Active</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div>
-                    <label class="block mb-2">Background Color</label>
-                    <input type="color" id="background-color" class="w-full h-10 rounded">
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Chat Window -->
+        <div class="chat-window-mobile flex-1 flex flex-col">
+            <!-- Chat Header -->
+            <div id="chat-header" class="p-4 border-b border-gray-800 flex items-center">
+                <div class="w-10 h-10 bg-purple-600 rounded-full flex items-center justify-center">
+                    <i class="fas fa-user"></i>
                 </div>
-                <div>
-                    <label class="block mb-2">Navbar Color</label>
-                    <input type="color" id="navbar-color" class="w-full h-10 rounded">
+                <div class="ml-4">
+                    <h2 id="chat-user-name" class="font-bold">Select a chat</h2>
+                    <p id="chat-status" class="text-sm text-gray-400">-</p>
                 </div>
-                <div>
-                    <label class="block mb-2">Font Family</label>
-                    <select id="font-family" class="w-full p-2 rounded bg-gray-800 text-white">
-                        <optgroup label="Sans Serif">
-                            <option value="Inter">Inter</option>
-                            <option value="Roboto">Roboto</option>
-                            <option value="Poppins">Poppins</option>
-                            <option value="Lato">Lato</option>
-                            <option value="Montserrat">Montserrat</option>
-                        </optgroup>
-                        <optgroup label="Serif">
-                            <option value="Playfair Display">Playfair Display</option>
-                        </optgroup>
-                        <optgroup label="Cursive">
-                            <option value="Dancing Script">Dancing Script</option>
-                            <option value="Pacifico">Pacifico</option>
-                            <option value="Great Vibes">Great Vibes</option>
-                        </optgroup>
-                    </select>
+            </div>
+
+            <!-- Messages -->
+            <div id="messages-container" class="messages-container flex-1 overflow-y-auto p-4">
+                <!-- Messages will be dynamically inserted here -->
+            </div>
+
+            <!-- Chat Input -->
+            <div class="p-4 border-t border-gray-800">
+                <div class="flex items-center">
+                    <button class="p-2 hover:text-pink-500">
+                        <i class="fas fa-image text-xl"></i>
+                    </button>
+                    <button class="p-2 hover:text-pink-500">
+                        <i class="fas fa-face-smile text-xl"></i>
+                    </button>
+                    <input type="text" 
+                           id="chat-input" 
+                           placeholder="Type a message..." 
+                           class="chat-input flex-1 bg-gray-800 rounded-lg px-4 py-2 mx-2"
+                           disabled>
+                    <button id="send-message" 
+                            class="gradient-bg p-2 rounded-lg hover:opacity-90" 
+                            disabled>
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
                 </div>
-                <button class="w-full py-2 px-4 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors" id="reset-theme">
-                    Reset to Default
-                </button>
             </div>
         </div>
     </div>
 
-    <!-- Mobile Nav Toggle -->
-    <button class="mobile-nav-toggle fixed top-4 left-4 z-50 bg-blue-500 p-3 rounded-lg hidden transform hover:scale-105 transition-all focus:outline-none focus:ring-2 focus:ring-blue-400">
-        <i class="fas fa-bars text-white"></i>
-    </button>
-
-    <!-- Vertical Navigation -->
-    <nav class="vertical-nav">
-        <div class="py-6 px-4">
-            <h1 class="text-3xl font-bold text-center tracking-tight">
-                L<span class="text-blue-500 animate-pulse">❤</span>L
-            </h1>
-        </div>
-        
-        <div class="space-y-1">
-            <a href="/feed" class="nav-link">
-                <i class="fas fa-compass"></i>
-                <span>Explore</span>
-            </a>
-            <a href="/dashboard" class="nav-link">
-                <i class="fas fa-home"></i>
-                <span>Dashboard</span>
-            </a>
-            <a href="/chat" class="nav-link active">
-                <i class="fas fa-comments"></i>
-                <span>Chat</span>
-            </a>
-            <a href="/create" class="nav-link">
-                <i class="fas fa-plus"></i>
-                <span>Create</span>
-            </a>
-            <a href="/list_connect" class="nav-link">
-                <i class="fas fa-users"></i>
-                <span>Matches</span>
-            </a>
-<a href="#" id="logout-button" class="nav-link">
-    <i class="fas fa-sign-out-alt"></i>
-    <span>Logout</span>
-</a>
-        </div>
-    </nav>
-
-    <!-- Main Content -->
-    <main class="main-content ml-60">
-        <div class="flex h-screen">
-            <!-- Chat List -->
-            <div class="w-1/3 border-r border-gray-800 glass-effect">
-                <div class="p-4">
-                    <div class="relative">
-                        <input type="text" 
-                               id="chat-search" 
-                               placeholder="Search chats..." 
-                               class="w-full bg-gray-800 rounded-lg px-4 py-3 pl-10 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all">
-                        <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                    </div>
-                </div>
-                <div id="chat-list" class="overflow-y-auto" style="height: calc(100vh - 80px);">
-                    <!-- Chat list items will be populated dynamically -->
-                </div>
-            </div>
-
-            <!-- Chat Window -->
-            <div class="flex-1 flex flex-col">
-                <!-- Chat Header -->
-                <div id="chat-header" class="p-4 glass-effect flex items-center border-b border-gray-800">
-                    <div class="relative">
-                        <div class="user-avatar">
-                            <i class="fas fa-user"></i>
-                        </div>
-                        <div class="user-status"></div>
-                    </div>
-                    <div class="ml-4">
-                        <h2 id="chat-user-name" class="font-bold text-lg">Select a chat</h2>
-                        <p id="chat-status" class="text-sm text-gray-400">-</p>
-                    </div>
-                </div>
-
-                <!-- Messages -->
-                <div id="messages-container" class="flex-1 overflow-y-auto p-4">
-                    <!-- Messages will be dynamically inserted here -->
-                </div>
-
-                <!-- Chat Input -->
-                <div class="p-4 glass-effect border-t border-gray-800">
-                    <div class="flex items-center gap-3">
-                        <button class="p-2 hover:text-blue-500 transition-all transform hover:scale-110 focus:outline-none">
-                            <i class="fas fa-image text-xl"></i>
-                        </button>
-                        <button class="p-2 hover:text-blue-500 transition-all transform hover:scale-110 focus:outline-none">
-                            <i class="fas fa-face-smile text-xl"></i>
-                        </button>
-                        <input type="text" 
-                               id="chat-input" 
-                               placeholder="Type a message..." 
-                               class="chat-input flex-1 rounded-lg px-4 py-3 focus:outline-none"
-                               disabled>
-                        <button id="send-message" 
-                                class="send-button p-3 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-400" 
-                                disabled>
-                            <i class="fas fa-paper-plane"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </main>
-
     <script>
-    // Theme management
-const themeKeys = {
-    primaryColor: '--primary-color',
-    primaryDark: '--primary-dark',
-    secondaryColor: '--secondary-color',
-    backgroundColor: '--background-color',
-    navbarColor: '--navbar-color',
-    messageSent: '--message-sent',
-    messageReceived: '--message-received',
-    fontFamily: 'font-family'
-};
-
-function initializeTheme() {
-    // Set color inputs to match current CSS variables
-    document.getElementById('primary-color').value = getComputedStyle(document.documentElement)
-        .getPropertyValue('--primary-color').trim();
-    document.getElementById('secondary-color').value = getComputedStyle(document.documentElement)
-        .getPropertyValue('--secondary-color').trim();
-    document.getElementById('background-color').value = getComputedStyle(document.documentElement)
-        .getPropertyValue('--background-color').trim();
-    
-    // For navbar color (rgba), convert to hex for the input
-    const navbarColor = getComputedStyle(document.documentElement)
-        .getPropertyValue('--navbar-color').trim();
-    if (navbarColor.startsWith('rgba')) {
-        const rgba = navbarColor.match(/\d+(\.\d+)?/g);
-        if (rgba && rgba.length >= 3) {
-            const hex = '#' + [0, 1, 2].map(i => {
-                return Math.round(parseFloat(rgba[i])).toString(16).padStart(2, '0');
-            }).join('');
-            document.getElementById('navbar-color').value = hex;
-        }
-    }
-    
-    // Load saved values from localStorage if they exist
-    Object.keys(themeKeys).forEach(key => {
-        const savedValue = localStorage.getItem(key);
-        if (savedValue) {
-            if (key === 'fontFamily') {
-                document.body.style.fontFamily = savedValue;
-                document.getElementById('font-family').value = savedValue;
-            } else {
-                document.documentElement.style.setProperty(themeKeys[key], savedValue);
-                
-                // For color inputs, update the input value
-                if (key.includes('Color') && !savedValue.includes('gradient')) {
-                    const inputId = key.replace(/([A-Z])/g, '-$1').toLowerCase();
-                    const input = document.getElementById(inputId);
-                    if (input && input.type === 'color') {
-                        // Convert rgba to hex if needed
-                        if (savedValue.startsWith('rgba')) {
-                            const rgba = savedValue.match(/\d+(\.\d+)?/g);
-                            if (rgba && rgba.length >= 3) {
-                                const hex = '#' + [0, 1, 2].map(i => {
-                                    return Math.round(parseFloat(rgba[i])).toString(16).padStart(2, '0');
-                                }).join('');
-                                input.value = hex;
-                            }
-                        } else {
-                            input.value = savedValue;
-                        }
-                    }
-                }
-            }
-        }
-    });
-}
-
-function setupThemeListeners() {
-    // Open/close modal
-    document.querySelector('.theme-button').addEventListener('click', () => {
-        document.querySelector('.theme-modal').classList.add('active');
-    });
-
-    document.querySelector('.close-theme').addEventListener('click', () => {
-        document.querySelector('.theme-modal').classList.remove('active');
-    });
-
-    document.querySelector('.theme-modal').addEventListener('click', (e) => {
-        if (e.target === document.querySelector('.theme-modal')) {
-            document.querySelector('.theme-modal').classList.remove('active');
-        }
-    });
-
-    // Handle color changes
-    document.getElementById('primary-color').addEventListener('input', (e) => {
-        const color = e.target.value;
-        document.documentElement.style.setProperty('--primary-color', color);
-        // Automatically update primary-dark (slightly darker version)
-        const darkColor = adjustColorBrightness(color, -20);
-        document.documentElement.style.setProperty('--primary-dark', darkColor);
-        localStorage.setItem('primaryColor', color);
-        localStorage.setItem('primaryDark', darkColor);
-        
-        // Update message-sent gradient
-        const gradient = `linear-gradient(135deg, ${color} 0%, ${darkColor} 100%)`;
-        document.documentElement.style.setProperty('--message-sent', gradient);
-        localStorage.setItem('messageSent', gradient);
-    });
-
-    document.getElementById('secondary-color').addEventListener('input', (e) => {
-        const color = e.target.value;
-        document.documentElement.style.setProperty('--secondary-color', color);
-        localStorage.setItem('secondaryColor', color);
-    });
-
-    document.getElementById('background-color').addEventListener('input', (e) => {
-        const color = e.target.value;
-        document.documentElement.style.setProperty('--background-color', color);
-        localStorage.setItem('backgroundColor', color);
-    });
-
-    document.getElementById('navbar-color').addEventListener('input', (e) => {
-        // Convert hex to rgba to keep transparency
-        const hex = e.target.value;
-        const rgb = hexToRgb(hex);
-        const rgba = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.95)`;
-        document.documentElement.style.setProperty('--navbar-color', rgba);
-        localStorage.setItem('navbarColor', rgba);
-    });
-
-    document.getElementById('font-family').addEventListener('change', (e) => {
-        const font = e.target.value;
-        document.body.style.fontFamily = font;
-        localStorage.setItem('fontFamily', font);
-        
-        // Dynamically load font if not already loaded
-        if (!document.getElementById(`font-${font}`)) {
-            const link = document.createElement('link');
-            link.id = `font-${font}`;
-            link.href = `https://fonts.googleapis.com/css2?family=${font.replace(' ', '+')}:wght@300;400;500;600;700&display=swap`;
-            link.rel = 'stylesheet';
-            document.head.appendChild(link);
-        }
-    });
-
-    // Reset to defaults
-    document.getElementById('reset-theme').addEventListener('click', () => {
-        const defaults = {
-            primaryColor: '#60a5fa',
-            primaryDark: '#2563eb',
-            secondaryColor: '#e2e8f0',
-            backgroundColor: '#0f172a',
-            navbarColor: 'rgba(15, 23, 42, 0.95)',
-            messageSent: 'linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%)',
-            messageReceived: 'rgba(30, 41, 59, 0.8)',
-            fontFamily: 'Inter'
-        };
-        
-        Object.entries(defaults).forEach(([key, value]) => {
-            if (key === 'fontFamily') {
-                document.body.style.fontFamily = value;
-                document.getElementById('font-family').value = value;
-            } else {
-                document.documentElement.style.setProperty(themeKeys[key], value);
-                localStorage.setItem(key, value);
-                
-                // Update color inputs
-                if (key.includes('Color') && !value.includes('gradient')) {
-                    const inputId = key.replace(/([A-Z])/g, '-$1').toLowerCase();
-                    const input = document.getElementById(inputId);
-                    if (input && input.type === 'color') {
-                        if (value.startsWith('rgba')) {
-                            const rgba = value.match(/\d+/g).slice(0, 3);
-                            const hex = '#' + rgba.map(x => parseInt(x).toString(16).padStart(2, '0')).join('');
-                            input.value = hex;
-                        } else {
-                            input.value = value;
-                        }
-                    }
-                }
-            }
-        });
-    });
-}
-
-// Logout function
-async function logout() {
-    try {
-        const response = await fetch('/logout', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        });
-        
-        if (response.ok) {
-            window.location.href = '/login'; // Redirect to login page
-        } else {
-            console.error('Logout failed');
-            alert('Failed to logout. Please try again.');
-        }
-    } catch (error) {
-        console.error('Error during logout:', error);
-        alert('Connection error during logout. Please try again.');
-    }
-}
-
-// Add this inside your DOMContentLoaded event listener
-document.getElementById('logout-button').addEventListener('click', (e) => {
-    e.preventDefault();
-    logout();
-});
-
-// Helper function to convert hex to RGB object
-function hexToRgb(hex) {
-    hex = hex.replace('#', '');
-    const r = parseInt(hex.substring(0, 2), 16);
-    const g = parseInt(hex.substring(2, 4), 16);
-    const b = parseInt(hex.substring(4, 6), 16);
-    return { r, g, b };
-}
-
-// Helper function to adjust color brightness
-function adjustColorBrightness(hex, percent) {
-    const { r, g, b } = hexToRgb(hex);
-    
-    const amount = Math.floor(2.55 * percent);
-    const newR = Math.max(0, Math.min(255, r + amount));
-    const newG = Math.max(0, Math.min(255, g + amount));
-    const newB = Math.max(0, Math.min(255, b + amount));
-    
-    return `#${newR.toString(16).padStart(2, '0')}${newG.toString(16).padStart(2, '0')}${newB.toString(16).padStart(2, '0')}`;
-}
-
-// Initialize theme when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
-    initializeTheme();
-    setupThemeListeners();
-});
-
         let currentChatId = null;
         const currentUserId = "{{ session.user_id }}";  // Get current user ID from session
         
