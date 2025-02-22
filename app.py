@@ -551,7 +551,7 @@ def connect():
         user_id = session.get('user_id')
         data = request.get_json()
         dest_user_id = data.get("dest_user_id")
-        
+        print("Reached here",dest_user_id)
         if not dest_user_id:
             return jsonify({"error": "Destination user ID is required"}), 400
         
@@ -826,10 +826,15 @@ def handle_feed():
                 'user_id': 1
             }))
             
-            filtered_posts = [post for post in all_posts if post['user_id'] != user_id]
-            
+            filtered_posts = [post for post in all_posts if (post['user_id'] != user_id)]
+            #print(filtered_posts)
+            super_filter=[]
+            for i in filtered_posts:
+                if i['type']=='image':
+                    super_filter.append(i)
+            print(super_filter)
             return jsonify({
-                'posts': filtered_posts,
+                'posts': super_filter,
                 'last_update': datetime.now().isoformat()
             }), 200
         except Exception as e:
@@ -887,7 +892,47 @@ def handle_feed():
         except Exception as e:
             return jsonify({"error": "An error occurred creating post"}), 500
 
-
+@app.route('/shorts', methods=['GET', 'POST'])
+@login_required
+def handle_shorts():
+    if request.method == 'GET':
+        try:
+            last_update = request.args.get('last_update', None)
+            user_id = session.get('user_id')
+            user_data = users_collection.find_one({"user_id": user_id})
+            
+            if not user_data:
+                return jsonify({"error": "User not found"}), 404
+            
+            query = {}
+            if last_update:
+                query['created_at'] = {'$gt': datetime.fromisoformat(last_update)}
+            
+            all_posts = list(posts_collection.find(query, {
+                '_id': 0,
+                'username': 1,
+                'created_at': 1,
+                'file_url': 1,
+                'likes': 1,
+                'comment_count': 1,
+                'content': 1,
+                'type': 1,
+                'user_id': 1
+            }))
+            
+            filtered_posts = [post for post in all_posts if (post['user_id'] != user_id)]
+            #print(filtered_posts)
+            super_filter=[]
+            for i in filtered_posts:
+                if i['type']=='video':
+                    super_filter.append(i)
+            print(super_filter)
+            return jsonify({
+                'posts': super_filter,
+                'last_update': datetime.now().isoformat()
+            }), 200
+        except Exception as e:
+            return jsonify({"error": "An error occurred while fetching posts"}), 500
 @app.route('/files/<file_id>')
 def serve_file(file_id):
     try:

@@ -3,50 +3,78 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>L❤L - Feed</title>
+    <title>L❤L - Shorts</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;700&display=swap');
-        @import url('https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap');
-        @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&display=swap');
-        @import url('https://fonts.googleapis.com/css2?family=Pacifico&display=swap');
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap');
-        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;700&display=swap');
-        @import url('https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap');
         
         :root {
             --primary-color: #60a5fa;
             --secondary-color: #e2e8f0;
             --background-color: #0f172a;
             --navbar-color: rgba(15, 23, 42, 0.95);
-            --font-family: 'Inter';
+            --card-bg: rgba(30, 41, 59, 0.95);
         }
 
         body {
-            font-family: var(--font-family), sans-serif;
+            font-family: 'Inter', sans-serif;
             background: var(--background-color);
             color: var(--secondary-color);
-        }
-
-        .glass-effect {
-            background: rgba(15, 23, 42, 0.8);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin: 0;
+            overflow: hidden;
         }
 
         .vertical-nav {
             width: 240px;
             height: 100vh;
             position: fixed;
-            left: 0;
+            left: -240px;
             top: 0;
             background: var(--navbar-color);
             backdrop-filter: blur(10px);
-            transition: transform 0.3s ease;
             z-index: 50;
+            transition: left 0.3s ease;
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .vertical-nav.open {
+            left: 0;
+        }
+
+        .burger-menu {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 60;
+            cursor: pointer;
+            padding: 10px;
+            border-radius: 8px;
+            background: var(--navbar-color);
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .burger-menu span {
+            display: block;
+            width: 24px;
+            height: 2px;
+            background: var(--secondary-color);
+            transition: all 0.3s ease;
+        }
+
+        .burger-menu.open span:nth-child(1) {
+            transform: translateY(6px) rotate(45deg);
+        }
+
+        .burger-menu.open span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .burger-menu.open span:nth-child(3) {
+            transform: translateY(-6px) rotate(-45deg);
         }
 
         .nav-link {
@@ -71,81 +99,134 @@
         }
 
         .main-content {
-            margin-left: 240px;
-            padding: 2rem;
-            min-height: 100vh;
+            margin-left: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
             transition: margin-left 0.3s ease;
+            background: radial-gradient(circle at center, rgba(96, 165, 250, 0.1), transparent);
         }
 
-        /* Card Stack Styles */
-        #card-stack {
-            position: relative;
+        .shorts-container {
             width: 100%;
-            max-width: 600px;
-            height: 600px;
-            margin: 0 auto;
+            max-width: 420px;
+            height: 85vh;
+            position: relative;
+            overflow: hidden;
+            border-radius: 24px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
         }
 
-        .card {
-            transition: transform 0.3s ease-out;
+        .short-item {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 24px;
+            overflow: hidden;
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
         }
 
-        .card.swiped-left {
-            transform: translateX(-150%) rotate(-30deg);
+        .short-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 24px;
         }
 
-        .card.swiped-right {
-            transform: translateX(150%) rotate(30deg);
+        .short-info {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 2rem;
+            background: linear-gradient(transparent, rgba(0,0,0,0.9));
+            color: white;
+            border-bottom-left-radius: 24px;
+            border-bottom-right-radius: 24px;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
         }
 
-        /* Connection Prompt Styles */
-        .connection-prompt {
-            position: fixed;
+        .short-item:hover .short-info {
+            transform: translateY(0);
+        }
+
+        .action-buttons {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+            z-index: 10;
+        }
+
+        .action-button {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(5px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid rgba(255,255,255,0.1);
+            font-size: 1.2rem;
+        }
+
+        .action-button:hover {
+            background: var(--primary-color);
+            transform: scale(1.1);
+            border-color: var(--primary-color);
+            box-shadow: 0 0 20px rgba(96, 165, 250, 0.3);
+        }
+
+        .swipe-indicator {
+            position: absolute;
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(5px);
+            border-radius: 50%;
+            opacity: 0;
+            transition: all 0.3s;
+            padding: 20px;
+            border: 2px solid rgba(255,255,255,0.1);
+        }
+
+        .swipe-indicator.left {
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .swipe-indicator.right {
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .swipe-indicator.up {
             top: 20px;
             left: 50%;
             transform: translateX(-50%);
-            background: var(--primary-color);
-            color: white;
-            padding: 1rem 2rem;
-            border-radius: 1rem;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            animation: slideDown 0.3s ease-out, fadeOut 0.3s ease-in 2.7s forwards;
-            z-index: 1000;
         }
 
-        @keyframes slideDown {
-            from { transform: translate(-50%, -100%); }
-            to { transform: translate(-50%, 0); }
+        .swipe-indicator.down {
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
         }
 
-        @keyframes fadeOut {
-            to { opacity: 0; }
-        }
-
-                .theme-modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .theme-modal.active {
-            display: flex;
-        }
-
-        .theme-content {
-            width: 90%;
-            max-width: 400px;
-            padding: 2rem;
-            border-radius: 1rem;
+        .swipe-indicator.visible {
+            opacity: 1;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 20px rgba(96, 165, 250, 0.3);
         }
 
         .theme-button {
@@ -165,45 +246,6 @@
             transition: all 0.3s ease;
         }
 
-        .theme-button:hover {
-            transform: rotate(30deg);
-        }
-
-
-        @media (max-width: 768px) {
-            .vertical-nav {
-                transform: translateX(-100%);
-            }
-            .vertical-nav.active {
-                transform: translateX(0);
-            }
-            .main-content {
-                margin-left: 0;
-            }
-            .mobile-nav-toggle {
-                display: block !important;
-            }
-        }
-        .music-feed {
-            position: fixed;
-            right: 20px;
-            bottom: 80px;
-            width: 50px;
-            height: 50px;
-            background: var(--primary-color);
-            border-radius: 25px;
-            transition: all 0.3s ease;
-            z-index: 40;
-            overflow: hidden;
-            cursor: pointer;
-        }
-
-        .music-feed.expanded {
-            width: 300px;
-            height: 400px;
-            border-radius: 1rem;
-        }
-
         .chat-window {
             position: fixed;
             right: 20px;
@@ -221,73 +263,116 @@
             height: 500px;
             border-radius: 1rem;
         }
+
+        .nav-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 45;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .nav-overlay.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* Animation classes */
+        .slide-left {
+            transform: translateX(-150%) rotate(-30deg) !important;
+        }
+
+        .slide-right {
+            transform: translateX(150%) rotate(30deg) !important;
+        }
+
+        .slide-up {
+            transform: translateY(-150%) !important;
+        }
+
+        .slide-down {
+            transform: translateY(150%) !important;
+        }
+
+        /* Progress bar */
+        .progress-container {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            height: 4px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 2px;
+            overflow: hidden;
+            z-index: 20;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: var(--primary-color);
+            width: 0;
+            transition: width 0.3s linear;
+        }
+
+        /* User info badge */
+        .user-badge {
+            position: absolute;
+            top: 40px;
+            left: 20px;
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(5px);
+            padding: 8px 16px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 20;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .user-badge img {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+        }
+
+        @media (min-width: 768px) {
+            .vertical-nav {
+                left: 0;
+            }
+
+            .burger-menu {
+                display: none;
+            }
+
+            .main-content {
+                margin-left: 240px;
+            }
+
+            .chat-window {
+                right: 40px;
+            }
+
+            .theme-button {
+                right: 40px;
+            }
+        }
     </style>
 </head>
 <body>
-    <!-- Theme Button -->
-    <button class="theme-button">
-        <i class="fas fa-paint-brush"></i>
-    </button>
-
-    <!-- Theme Modal -->
-    <div class="theme-modal">
-        <div class="theme-content glass-effect">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="text-lg font-semibold">Customize Theme</h3>
-                <button class="close-theme text-gray-400 hover:text-white">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="space-y-6">
-                <div>
-                    <label class="block mb-2">Primary Color</label>
-                    <input type="color" id="primary-color" class="w-full h-10 rounded">
-                </div>
-                <div>
-                    <label class="block mb-2">Secondary Color</label>
-                    <input type="color" id="secondary-color" class="w-full h-10 rounded">
-                </div>
-                <div>
-                    <label class="block mb-2">Background Color</label>
-                    <input type="color" id="background-color" class="w-full h-10 rounded">
-                </div>
-                <div>
-                    <label class="block mb-2">Navbar Color</label>
-                    <input type="color" id="navbar-color" class="w-full h-10 rounded">
-                </div>
-                <div>
-                    <label class="block mb-2">Font Family</label>
-                    <select id="font-family" class="w-full p-2 rounded bg-gray-800 text-white">
-                        <optgroup label="Sans Serif">
-                            <option value="Inter">Inter</option>
-                            <option value="Roboto">Roboto</option>
-                            <option value="Poppins">Poppins</option>
-                            <option value="Lato">Lato</option>
-                            <option value="Montserrat">Montserrat</option>
-                        </optgroup>
-                        <optgroup label="Serif">
-                            <option value="Playfair Display">Playfair Display</option>
-                        </optgroup>
-                        <optgroup label="Cursive">
-                            <option value="Dancing Script">Dancing Script</option>
-                            <option value="Pacifico">Pacifico</option>
-                            <option value="Great Vibes">Great Vibes</option>
-                        </optgroup>
-                    </select>
-                </div>
-                <button class="w-full py-2 px-4 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors" id="reset-theme">
-                    Reset to Default
-                </button>
-            </div>
-        </div>
+    <div class="burger-menu">
+        <span></span>
+        <span></span>
+        <span></span>
     </div>
 
-    <!-- Mobile Nav Toggle -->
-    <button class="mobile-nav-toggle fixed top-4 left-4 z-50 bg-blue-500 p-2 rounded-lg hidden">
-        <i class="fas fa-bars text-white"></i>
-    </button>
+    <div class="nav-overlay"></div>
 
-    <!-- Vertical Navigation -->
     <nav class="vertical-nav">
         <div class="py-6 px-4">
             <h1 class="text-2xl font-bold text-center">
@@ -316,38 +401,22 @@
                 <i class="fas fa-users"></i>
                 <span>Matches</span>
             </a>
-            <!-- Add this inside the "space-y-1" div in the vertical navigation -->
-<a href="#" onclick="logout()" id="logout-button" class="nav-link">
-    <i class="fas fa-sign-out-alt"></i>
-    <span>Logout</span>
-</a>
+            <a href="#" onclick="logout()" class="nav-link">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Logout</span>
+            </a>
         </div>
     </nav>
 
-    <!-- Main Content -->
     <main class="main-content">
-        <!-- Card Stack Container -->
-        <div id="card-stack" class="relative"></div>
-
-        <!-- Swipe Controls -->
-        <div class="flex justify-center gap-8 mt-8">
-            <button onclick="swipeLeft()" class="bg-red-500 hover:bg-red-600 text-white rounded-full w-16 h-16 flex items-center justify-center text-2xl transition-colors">
-                <i class="fas fa-times"></i>
-            </button>
-            <button onclick="swipeRight()" class="bg-green-500 hover:bg-green-600 text-white rounded-full w-16 h-16 flex items-center justify-center text-2xl transition-colors">
-                <i class="fas fa-heart"></i>
-            </button>
-        </div>
+        <div class="shorts-container" id="shorts-container"></div>
     </main>
 
-    <!-- Music Feed Button/Container -->
-    <div class="music-feed flex items-center justify-center">
-        <i class="fas fa-music text-white text-xl"></i>
-        <iframe src="/music-feed" class="w-full h-full hidden"></iframe>
-    </div>
+    <button class="theme-button">
+        <i class="fas fa-paint-brush"></i>
+    </button>
 
-    <!-- Chat Window -->
-    <div class="chat-window glass-effect">
+    <div class="chat-window">
         <div class="h-full flex flex-col">
             <div class="p-3 border-b border-gray-700 cursor-pointer flex justify-between items-center">
                 <h3 class="font-semibold">Chat</h3>
@@ -356,349 +425,281 @@
             <iframe src="/chat" class="w-full flex-grow hidden"></iframe>
         </div>
     </div>
-    
+
     <script>
-    async function logout() {
-            try {
-                const response = await fetch('/logout');
-                if (response.ok) {
-                    window.location.href = '/';
-                } else {
-                    alert('Failed to logout');
-                }
-            } catch (error) {
-                console.error('Error logging out:', error);
-                alert('Failed to logout');
-            }
+        let shorts = [];
+        let currentIndex = 0;
+        let startX = 0;
+        let startY = 0;
+        let lastUpdate = null;
+
+        // Navigation functionality
+        const burgerMenu = document.querySelector('.burger-menu');
+        const nav = document.querySelector('.vertical-nav');
+        const overlay = document.querySelector('.nav-overlay');
+
+        burgerMenu.addEventListener('click', toggleNav);
+        overlay.addEventListener('click', closeNav);
+
+        function toggleNav() {
+            burgerMenu.classList.toggle('open');
+            nav.classList.toggle('open');
+            overlay.classList.toggle('visible');
         }
-    // Theme management
-    const themeKeys = {
-        primaryColor: '--primary-color',
-        secondaryColor: '--secondary-color',
-        backgroundColor: '--background-color',
-        navbarColor: '--navbar-color',
-        fontFamily: '--font-family',
-    };
 
-    function initializeTheme() {
-        Object.keys(themeKeys).forEach(key => {
-            const savedValue = localStorage.getItem(key);
-            if (savedValue) {
-                document.documentElement.style.setProperty(themeKeys[key], savedValue);
-                const input = document.getElementById(key.replace(/([A-Z])/g, '-$1').toLowerCase());
-                if (input) {
-                    input.value = savedValue;
-                }
-            }
-        });
-    }
+        function closeNav() {
+            burgerMenu.classList.remove('open');
+            nav.classList.remove('open');
+            overlay.classList.remove('visible');
+        }
 
-    function setupThemeListeners() {
-        document.querySelector('.theme-button').addEventListener('click', () => {
-            document.querySelector('.theme-modal').classList.add('active');
-        });
-
-        document.querySelector('.close-theme').addEventListener('click', () => {
-            document.querySelector('.theme-modal').classList.remove('active');
-        });
-
-        document.querySelector('.theme-modal').addEventListener('click', (e) => {
-            if (e.target === document.querySelector('.theme-modal')) {
-                document.querySelector('.theme-modal').classList.remove('active');
-            }
-        });
-
-        Object.keys(themeKeys).forEach(key => {
-            const input = document.getElementById(key.replace(/([A-Z])/g, '-$1').toLowerCase());
-            if (input) {
-                input.addEventListener('input', (e) => {
-                    document.documentElement.style.setProperty(themeKeys[key], e.target.value);
-                    localStorage.setItem(key, e.target.value);
-                });
-            }
-        });
-
-        document.getElementById('reset-theme').addEventListener('click', () => {
-            const defaults = {
-                primaryColor: '#60a5fa',
-                secondaryColor: '#e2e8f0',
-                backgroundColor: '#0f172a',
-                navbarColor: 'rgba(15, 23, 42, 0.95)',
-                fontFamily: 'Inter'
-            };
-            
-            Object.entries(defaults).forEach(([key, value]) => {
-                document.documentElement.style.setProperty(themeKeys[key], value);
-                localStorage.setItem(key, value);
-                
-                const input = document.getElementById(key.replace(/([A-Z])/g, '-$1').toLowerCase());
-                if (input) {
-                    if (input.type === 'color') {
-                        if (value.startsWith('rgba')) {
-                            const rgb = value.match(/\d+/g).slice(0, 3);
-                            const hex = '#' + rgb.map(x => parseInt(x).toString(16).padStart(2, '0')).join('');
-                            input.value = hex;
-                        } else {
-                            input.value = value;
-                        }
-                    } else {
-                        input.value = value;
-                    }
+        // Close nav when clicking a link (mobile)
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', () => {
+                if (window.innerWidth < 768) {
+                    closeNav();
                 }
             });
         });
-    }
 
-    // Card Stack Management
-    let currentCardIndex = 0;
-    let posts = [];
-    let lastUpdate = null;
-
-    async function fetchPosts() {
-        try {
-            const url = lastUpdate ? `/posts?last_update=${lastUpdate}` : '/posts';
-            const response = await fetch(url);
-            const data = await response.json();
-            
-            if (data.posts) {
-                posts = [...posts, ...data.posts];
-                lastUpdate = data.last_update;
-                if (posts.length > 0 && !document.querySelector('.card')) {
-                    loadNextCard();
-                }
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            if (window.innerWidth >= 768) {
+                closeNav();
             }
-        } catch (error) {
-            console.error('Error fetching posts:', error);
-        }
-    }
+        });
 
-    function createCard(post) {
-        const card = document.createElement('div');
-        card.className = 'card absolute inset-0 bg-gray-800 rounded-2xl shadow-xl overflow-hidden';
-        card.innerHTML = `
-            <img src="${post.file_url}" alt="Post image" class="w-full h-[400px] object-cover">
-            <div class="absolute top-4 right-4 bg-pink-500 rounded-full px-3 py-1 text-sm">
-                <i class="fas fa-fire mr-1"></i>Trending
-            </div>
-            <div class="p-4">
-                <div class="flex items-center justify-between mb-2">
-                    <div>
-                        <h3 class="text-xl font-bold">${post.username}</h3>
-                        <p class="text-sm text-gray-400">${post.content || 'Content Creator'}</p>
+        // Chat window functionality
+        const chatWindow = document.querySelector('.chat-window');
+        const chatHeader = chatWindow.querySelector('.p-3');
+        const chatFrame = chatWindow.querySelector('iframe');
+        const chatIcon = chatHeader.querySelector('i');
+
+        chatHeader.addEventListener('click', () => {
+            chatWindow.classList.toggle('expanded');
+            chatFrame.classList.toggle('hidden');
+            chatIcon.classList.toggle('fa-chevron-up');
+            chatIcon.classList.toggle('fa-chevron-down');
+        });
+
+        async function fetchShorts() {
+            try {
+                const url = lastUpdate ? `/shorts?last_update=${lastUpdate}` : '/shorts';
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (data.posts) {
+                    shorts = [...shorts, ...data.posts];
+                    lastUpdate = data.last_update;
+                    if (shorts.length > 0) {
+                        renderCurrentShort();
+                    }
+                }
+            } catch (error) {
+                console.error('Error fetching shorts:', error);
+            }
+        }
+
+        function renderCurrentShort() {
+            const container = document.getElementById('shorts-container');
+            const short = shorts[currentIndex];
+            
+            container.innerHTML = `
+                <div class="short-item">
+                    <div class="progress-container">
+                        <div class="progress-bar"></div>
                     </div>
-                    <div class="text-right">
-                        <div class="text-sm text-gray-400">
-                            <i class="fas fa-heart mr-1"></i>${post.likes || Math.floor(Math.random() * 500)} Likes
+                    <div class="user-badge">
+                        <img src="/api/placeholder/24/24" alt="${short.username}"/>
+                        <span class="font-semibold">${short.username}</span>
+                    </div>
+                    <video class="short-video" src="${short.file_url}" loop autoplay muted></video>
+                    <div class="short-info">
+                        <h3 class="text-xl font-bold mb-2">${short.username}</h3>
+                        <p class="text-sm opacity-90">${short.content || ''}</p>
+                    </div>
+                    <div class="action-buttons">
+                        <div class="action-button group" onclick="swipeUp()">
+                            <i class="fas fa-chevron-up"></i>
                         </div>
-                        <div class="text-sm text-gray-400">
-                            <i class="fas fa-comment mr-1"></i>${post.comments || Math.floor(Math.random() * 50)} Comments
+                        <div class="action-button" onclick="swipeRight()">
+                            <i class="fas fa-heart"></i>
+                        </div>
+                        <div class="action-button" onclick="swipeLeft()">
+                            <i class="fas fa-times"></i>
+                        </div>
+                        <div class="action-button" onclick="swipeDown()">
+                            <i class="fas fa-chevron-down"></i>
                         </div>
                     </div>
                 </div>
-            </div>
-        `;
-        return card;
-    }
+            `;
 
-    function loadNextCard() {
-        const cardStack = document.getElementById('card-stack');
-        if (currentCardIndex >= posts.length) {
-            fetchPosts();
-            return;
+            const video = container.querySelector('video');
+            video.play();
+
+            // Start progress bar
+            const progressBar = container.querySelector('.progress-bar');
+            progressBar.style.width = '0';
+            setTimeout(() => {
+                progressBar.style.width = '100%';
+            }, 100);
         }
 
-        const post = posts[currentCardIndex];
-        const newCard = createCard(post);
-        cardStack.innerHTML = '';
-        cardStack.appendChild(newCard);
-    }
-
-    function showConnectionPrompt(username) {
-        const existingPrompt = document.querySelector('.connection-prompt');
-        if (existingPrompt) {
-            existingPrompt.remove();
+        async function swipeLeft() {
+            const shortItem = document.querySelector('.short-item');
+            shortItem.classList.add('slide-left');
+            setTimeout(() => {
+                nextShort();
+            }, 300);
         }
 
-        const prompt = document.createElement('div');
-        prompt.className = 'connection-prompt';
-        prompt.innerHTML = `
-            <i class="fas fa-heart text-2xl mb-2"></i>
-            <p>Connection request sent to ${username}!</p>
-        `;
-        
-        document.body.appendChild(prompt);
-
-        setTimeout(() => {
-            if (prompt.parentNode) {
-                prompt.remove();
-            }
-        }, 3000);
-    }
-
-    function swipeLeft() {
-        const card = document.querySelector('.card');
-        card.classList.add('swiped-left');
-        setTimeout(() => {
-            currentCardIndex++;
-            loadNextCard();
-        }, 300);
-    }
-
-    async function swipeRight() {
-        const card = document.querySelector('.card');
-        card.classList.add('swiped-right');
-        
-        try {
-            const currentPost = posts[currentCardIndex];
-            const destUserId = currentPost.user_id;
-            const username = currentPost.username;
-
-            const response = await fetch('/connect', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ dest_user_id: destUserId })
-            });
-
-            const result = await response.json();
+        async function swipeRight() {
+            const shortItem = document.querySelector('.short-item');
+            shortItem.classList.add('slide-right');
             
-            if (response.ok) {
-                showConnectionPrompt(username);
-            } else {
-                console.error(result.error);
+            try {
+                const currentShort = shorts[currentIndex];
+                const response = await fetch('/connect', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ dest_user_id: currentShort.user_id })
+                });
+            } catch (error) {
+                console.error('Error sending connection request:', error);
             }
-        } catch (error) {
-            console.error('Error sending connection request:', error);
+
+            setTimeout(() => {
+                nextShort();
+            }, 300);
         }
 
-        setTimeout(() => {
-            currentCardIndex++;
-            loadNextCard();
-        }, 300);
-    }
-
-    // Music Feed
-const musicFeed = document.querySelector('.music-feed');
-const musicIframe = musicFeed.querySelector('iframe');
-const musicIcon = musicFeed.querySelector('.fa-music');
-
-// Function to collapse the music feed
-function collapseMusicFeed() {
-    musicFeed.classList.remove('expanded');
-    musicIframe.classList.add('hidden');
-    musicIcon.style.display = 'block';
-}
-
-// Function to expand the music feed
-function expandMusicFeed() {
-    musicFeed.classList.add('expanded');
-    musicIframe.classList.remove('hidden');
-    musicIcon.style.display = 'none';
-}
-
-// Toggle music feed when clicking the button
-musicFeed.addEventListener('click', (e) => {
-    // Prevent this click from immediately triggering the document click handler
-    e.stopPropagation();
-    
-    if (!musicFeed.classList.contains('expanded')) {
-        expandMusicFeed();
-    }
-});
-
-// Add click event listener to the document
-document.addEventListener('click', (e) => {
-    // Check if the music feed is expanded and the click is outside the music feed
-    if (musicFeed.classList.contains('expanded') && !musicFeed.contains(e.target)) {
-        collapseMusicFeed();
-    }
-});
-
-// Prevent clicks inside the iframe from closing the music feed
-musicIframe.addEventListener('click', (e) => {
-    e.stopPropagation();
-});
-    // Chat Window Functions
-    const chatWindow = document.querySelector('.chat-window');
-    const chatIframe = chatWindow.querySelector('iframe');
-
-    chatWindow.querySelector('.p-3').addEventListener('click', () => {
-        chatWindow.classList.toggle('expanded');
-        chatIframe.classList.toggle('hidden');
-    });
-
-    // Touch Controls
-    let touchStartX = 0;
-    let touchStartY = 0;
-
-    document.addEventListener('touchstart', (e) => {
-        const card = document.querySelector('.card');
-        if (!card) return;
-        
-        touchStartX = e.touches[0].clientX;
-        touchStartY = e.touches[0].clientY;
-    });
-
-    document.addEventListener('touchmove', (e) => {
-        const card = document.querySelector('.card');
-        if (!card || !touchStartX || !touchStartY) return;
-
-        const touchEndX = e.touches[0].clientX;
-        const touchEndY = e.touches[0].clientY;
-        const deltaX = touchEndX - touchStartX;
-        const deltaY = touchEndY - touchStartY;
-        const rotation = deltaX * 0.1;
-
-        card.style.transform = `translate(${deltaX}px, ${deltaY}px) rotate(${rotation}deg)`;
-    });
-
-    document.addEventListener('touchend', (e) => {
-        const card = document.querySelector('.card');
-        if (!card) return;
-
-        const touchEndX = e.changedTouches[0].clientX;
-        const deltaX = touchEndX - touchStartX;
-
-        if (Math.abs(deltaX) > 100) {
-            if (deltaX > 0) swipeRight();
-            else swipeLeft();
-        } else {
-            card.style.transform = '';
+        function swipeUp() {
+            const shortItem = document.querySelector('.short-item');
+            shortItem.classList.add('slide-up');
+            setTimeout(() => {
+                nextShort();
+            }, 300);
         }
 
-        touchStartX = null;
-        touchStartY = null;
-    });
+        function swipeDown() {
+            const shortItem = document.querySelector('.short-item');
+            shortItem.classList.add('slide-down');
+            setTimeout(() => {
+                previousShort();
+            }, 300);
+        }
 
-    // Keyboard Controls
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'ArrowLeft') swipeLeft();
-        if (e.key === 'ArrowRight') swipeRight();
-    });
+        function nextShort() {
+            currentIndex = (currentIndex + 1) % shorts.length;
+            renderCurrentShort();
+        }
 
-    // Initialize everything when the document is ready
-    document.addEventListener('DOMContentLoaded', () => {
-        initializeTheme();
-        setupThemeListeners();
-        fetchPosts();
+        function previousShort() {
+            currentIndex = (currentIndex - 1 + shorts.length) % shorts.length;
+            renderCurrentShort();
+        }
 
-        // Mobile navigation
-        document.querySelector('.mobile-nav-toggle').addEventListener('click', () => {
-            document.querySelector('.vertical-nav').classList.toggle('active');
+        // Touch handlers for all directions
+        document.addEventListener('touchstart', (e) => {
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
         });
 
-        // Close navigation on mobile when clicking outside
-        document.addEventListener('click', (e) => {
-            if (window.innerWidth <= 768) {
-                const nav = document.querySelector('.vertical-nav');
-                const toggle = document.querySelector('.mobile-nav-toggle');
-                if (!nav.contains(e.target) && !toggle.contains(e.target)) {
-                    nav.classList.remove('active');
+        document.addEventListener('touchmove', (e) => {
+            if (!startX || !startY) return;
+
+            const currentX = e.touches[0].clientX;
+            const currentY = e.touches[0].clientY;
+            const diffX = startX - currentX;
+            const diffY = startY - currentY;
+
+            // Show swipe indicators based on direction
+            const indicators = document.querySelectorAll('.swipe-indicator');
+            indicators.forEach(indicator => indicator.classList.remove('visible'));
+
+            if (Math.abs(diffX) > Math.abs(diffY)) {
+                // Horizontal swipe
+                if (diffX > 50) {
+                    document.querySelector('.swipe-indicator.left').classList.add('visible');
+                } else if (diffX < -50) {
+                    document.querySelector('.swipe-indicator.right').classList.add('visible');
+                }
+            } else {
+                // Vertical swipe
+                if (diffY > 50) {
+                    document.querySelector('.swipe-indicator.up').classList.add('visible');
+                } else if (diffY < -50) {
+                    document.querySelector('.swipe-indicator.down').classList.add('visible');
                 }
             }
         });
-    });
-</script>
+
+        document.addEventListener('touchend', (e) => {
+            if (!startX || !startY) return;
+
+            const endX = e.changedTouches[0].clientX;
+            const endY = e.changedTouches[0].clientY;
+            const diffX = startX - endX;
+            const diffY = startY - endY;
+
+            // Hide all indicators
+            const indicators = document.querySelectorAll('.swipe-indicator');
+            indicators.forEach(indicator => indicator.classList.remove('visible'));
+
+            // Determine if the swipe was primarily horizontal or vertical
+            if (Math.abs(diffX) > Math.abs(diffY)) {
+                // Horizontal swipe
+                if (Math.abs(diffX) > 50) {
+                    if (diffX > 0) {
+                        swipeLeft();
+                    } else {
+                        swipeRight();
+                    }
+                }
+            } else {
+                // Vertical swipe
+                if (Math.abs(diffY) > 50) {
+                    if (diffY > 0) {
+                        swipeUp();
+                    } else {
+                        swipeDown();
+                    }
+                }
+            }
+
+            startX = null;
+            startY = null;
+        });
+
+        // Theme toggle functionality
+        const themeButton = document.querySelector('.theme-button');
+        let isDarkTheme = true;
+
+        themeButton.addEventListener('click', () => {
+            isDarkTheme = !isDarkTheme;
+            if (isDarkTheme) {
+                document.documentElement.style.setProperty('--background-color', '#0f172a');
+                document.documentElement.style.setProperty('--navbar-color', 'rgba(15, 23, 42, 0.95)');
+                document.documentElement.style.setProperty('--secondary-color', '#e2e8f0');
+            } else {
+                document.documentElement.style.setProperty('--background-color', '#f1f5f9');
+                document.documentElement.style.setProperty('--navbar-color', 'rgba(241, 245, 249, 0.95)');
+                document.documentElement.style.setProperty('--secondary-color', '#1e293b');
+            }
+        });
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchShorts();
+        });
+
+        // Logout function
+        function logout() {
+            window.location.href = '/logout';
+        }
+    </script>
 </body>
 </html>
