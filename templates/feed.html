@@ -7,22 +7,80 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
+        /* Import fonts */
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Pacifico&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap');
+
         :root {
             --primary-color: #60a5fa;
             --secondary-color: #e2e8f0;
             --background-color: #0f172a;
             --navbar-color: rgba(15, 23, 42, 0.95);
-            --card-bg: rgba(30, 41, 59, 0.95);
+            --font-family: 'Inter';
         }
 
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: var(--font-family), sans-serif;
             background: var(--background-color);
             color: var(--secondary-color);
-            margin: 0;
-            overflow: hidden;
+        }
+
+        .glass-effect {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .theme-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .theme-modal.active {
+            display: flex;
+        }
+
+        .theme-content {
+            width: 90%;
+            max-width: 400px;
+            padding: 2rem;
+            border-radius: 1rem;
+        }
+
+        .theme-button {
+            position: fixed;
+            right: 20px;
+            top: 20px;
+            z-index: 100;
+            width: 50px;
+            height: 50px;
+            border-radius: 25px;
+            background: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .theme-button:hover {
+            transform: rotate(30deg);
         }
 
         .vertical-nav {
@@ -127,6 +185,7 @@
             overflow: hidden;
             background: var(--card-bg);
             backdrop-filter: blur(10px);
+            cursor: pointer;
         }
 
         .short-video {
@@ -188,6 +247,24 @@
             box-shadow: 0 0 20px rgba(96, 165, 250, 0.3);
         }
 
+        .play-indicator {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 50%;
+            padding: 20px;
+            opacity: 0.8;
+            transition: opacity 0.3s ease;
+            z-index: 20;
+        }
+
+        .hidden {
+            display: none;
+        }
+
         .swipe-indicator {
             position: absolute;
             background: rgba(255,255,255,0.15);
@@ -229,77 +306,6 @@
             box-shadow: 0 0 20px rgba(96, 165, 250, 0.3);
         }
 
-        .theme-button {
-            position: fixed;
-            right: 20px;
-            top: 20px;
-            z-index: 100;
-            width: 50px;
-            height: 50px;
-            border-radius: 25px;
-            background: var(--primary-color);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .chat-window {
-            position: fixed;
-            right: 20px;
-            bottom: 20px;
-            width: 350px;
-            height: 50px;
-            background: rgba(15, 23, 42, 0.95);
-            border-radius: 25px;
-            transition: all 0.3s ease;
-            z-index: 30;
-            overflow: hidden;
-        }
-
-        .chat-window.expanded {
-            height: 500px;
-            border-radius: 1rem;
-        }
-
-        .nav-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 45;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s ease;
-        }
-
-        .nav-overlay.visible {
-            opacity: 1;
-            pointer-events: auto;
-        }
-
-        /* Animation classes */
-        .slide-left {
-            transform: translateX(-150%) rotate(-30deg) !important;
-        }
-
-        .slide-right {
-            transform: translateX(150%) rotate(30deg) !important;
-        }
-
-        .slide-up {
-            transform: translateY(-150%) !important;
-        }
-
-        .slide-down {
-            transform: translateY(150%) !important;
-        }
-
-        /* Progress bar */
         .progress-container {
             position: absolute;
             top: 20px;
@@ -319,7 +325,6 @@
             transition: width 0.3s linear;
         }
 
-        /* User info badge */
         .user-badge {
             position: absolute;
             top: 40px;
@@ -416,6 +421,59 @@
         <i class="fas fa-paint-brush"></i>
     </button>
 
+    <!-- Theme Modal -->
+    <div class="theme-modal">
+        <div class="theme-content glass-effect">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-lg font-semibold">Customize Theme</h3>
+                <button class="close-theme text-gray-400 hover:text-white">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="space-y-6">
+                <div>
+                    <label class="block mb-2">Primary Color</label>
+                    <input type="color" id="primary-color" class="w-full h-10 rounded">
+                </div>
+                <div>
+                    <label class="block mb-2">Secondary Color</label>
+                    <input type="color" id="secondary-color" class="w-full h-10 rounded">
+                </div>
+                <div>
+                    <label class="block mb-2">Background Color</label>
+                    <input type="color" id="background-color" class="w-full h-10 rounded">
+                </div>
+                <div>
+                    <label class="block mb-2">Navbar Color</label>
+                    <input type="color" id="navbar-color" class="w-full h-10 rounded">
+                </div>
+                <div>
+                    <label class="block mb-2">Font Family</label>
+                    <select id="font-family" class="w-full p-2 rounded bg-gray-800 text-white">
+                        <optgroup label="Sans Serif">
+                            <option value="Inter">Inter</option>
+                            <option value="Roboto">Roboto</option>
+                            <option value="Poppins">Poppins</option>
+                            <option value="Lato">Lato</option>
+                            <option value="Montserrat">Montserrat</option>
+                        </optgroup>
+                        <optgroup label="Serif">
+                            <option value="Playfair Display">Playfair Display</option>
+                        </optgroup>
+                        <optgroup label="Cursive">
+                            <option value="Dancing Script">Dancing Script</option>
+                            <option value="Pacifico">Pacifico</option>
+                            <option value="Great Vibes">Great Vibes</option>
+                        </optgroup>
+                    </select>
+                </div>
+                <button class="w-full py-2 px-4 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors" id="reset-theme">
+                    Reset to Default
+                </button>
+            </div>
+        </div>
+    </div>
+
     <div class="chat-window">
         <div class="h-full flex flex-col">
             <div class="p-3 border-b border-gray-700 cursor-pointer flex justify-between items-center">
@@ -427,6 +485,83 @@
     </div>
 
     <script>
+        const themeKeys = {
+            primaryColor: '--primary-color',
+            secondaryColor: '--secondary-color',
+            backgroundColor: '--background-color',
+            navbarColor: '--navbar-color',
+            fontFamily: '--font-family',
+        };
+
+        function initializeTheme() {
+            Object.keys(themeKeys).forEach(key => {
+                const savedValue = localStorage.getItem(key);
+                if (savedValue) {
+                    document.documentElement.style.setProperty(themeKeys[key], savedValue);
+                    const input = document.getElementById(key.replace(/([A-Z])/g, '-$1').toLowerCase());
+                    if (input) {
+                        input.value = savedValue;
+                    }
+                }
+            });
+        }
+
+        function setupThemeListeners() {
+            document.querySelector('.theme-button').addEventListener('click', () => {
+                document.querySelector('.theme-modal').classList.add('active');
+            });
+
+            document.querySelector('.close-theme').addEventListener('click', () => {
+                document.querySelector('.theme-modal').classList.remove('active');
+            });
+
+            document.querySelector('.theme-modal').addEventListener('click', (e) => {
+                if (e.target === document.querySelector('.theme-modal')) {
+                    document.querySelector('.theme-modal').classList.remove('active');
+                }
+            });
+
+            Object.keys(themeKeys).forEach(key => {
+                const input = document.getElementById(key.replace(/([A-Z])/g, '-$1').toLowerCase());
+                if (input) {
+                    input.addEventListener('input', (e) => {
+                        document.documentElement.style.setProperty(themeKeys[key], e.target.value);
+                        localStorage.setItem(key, e.target.value);
+                    });
+                }
+            });
+
+            document.getElementById('reset-theme').addEventListener('click', () => {
+                const defaults = {
+                    primaryColor: '#60a5fa',
+                    secondaryColor: '#e2e8f0',
+                    backgroundColor: '#0f172a',
+                    navbarColor: 'rgba(15, 23, 42, 0.95)',
+                    fontFamily: 'Inter'
+                };
+                
+                Object.entries(defaults).forEach(([key, value]) => {
+                    document.documentElement.style.setProperty(themeKeys[key], value);
+                    localStorage.setItem(key, value);
+                    
+                    const input = document.getElementById(key.replace(/([A-Z])/g, '-$1').toLowerCase());
+                    if (input) {
+                        if (input.type === 'color') {
+                            if (value.startsWith('rgba')) {
+                                const rgb = value.match(/\d+/g).slice(0, 3);
+                                const hex = '#' + rgb.map(x => parseInt(x).toString(16).padStart(2, '0')).join('');
+                                input.value = hex;
+                            } else {
+                                input.value = value;
+                            }
+                        } else {
+                            input.value = value;
+                        }
+                    }
+                });
+            });
+        }
+
         let shorts = [];
         let currentIndex = 0;
         let startX = 0;
@@ -452,15 +587,6 @@
             nav.classList.remove('open');
             overlay.classList.remove('visible');
         }
-
-        // Close nav when clicking a link (mobile)
-        document.querySelectorAll('.nav-link').forEach(link => {
-            link.addEventListener('click', () => {
-                if (window.innerWidth < 768) {
-                    closeNav();
-                }
-            });
-        });
 
         // Handle window resize
         window.addEventListener('resize', () => {
@@ -513,7 +639,7 @@
                         <img src="/api/placeholder/24/24" alt="${short.username}"/>
                         <span class="font-semibold">${short.username}</span>
                     </div>
-                    <video class="short-video" src="${short.file_url}" loop autoplay muted></video>
+                    <video class="short-video" src="${short.file_url}" loop autoplay></video>
                     <div class="short-info">
                         <h3 class="text-xl font-bold mb-2">${short.username}</h3>
                         <p class="text-sm opacity-90">${short.content || ''}</p>
@@ -531,11 +657,29 @@
                         <div class="action-button" onclick="swipeDown()">
                             <i class="fas fa-chevron-down"></i>
                         </div>
+                        <div class="action-button" onclick="toggleMute(event)">
+                            <i class="fas fa-volume-up"></i>
+                        </div>
+                    </div>
+                    <div class="play-indicator hidden">
+                        <i class="fas fa-play fa-3x"></i>
                     </div>
                 </div>
             `;
 
             const video = container.querySelector('video');
+            const shortItem = container.querySelector('.short-item');
+            const actionButtons = container.querySelector('.action-buttons');
+            const playIndicator = container.querySelector('.play-indicator');
+
+            // Add click handler for play/pause
+            shortItem.addEventListener('click', (event) => {
+                // Check if click is not on action buttons
+                if (!actionButtons.contains(event.target)) {
+                    togglePlayPause(video, playIndicator);
+                }
+            });
+
             video.play();
 
             // Start progress bar
@@ -544,6 +688,34 @@
             setTimeout(() => {
                 progressBar.style.width = '100%';
             }, 100);
+        }
+
+        function togglePlayPause(video, playIndicator) {
+            if (video.paused) {
+                video.play();
+                playIndicator.classList.add('hidden');
+            } else {
+                video.pause();
+                playIndicator.classList.remove('hidden');
+            }
+        }
+
+        function toggleMute(event) {
+            event.stopPropagation(); // Prevent triggering the play/pause
+            const video = document.querySelector('.short-video');
+            const muteButton = event.currentTarget;
+            const icon = muteButton.querySelector('i');
+            
+            video.muted = !video.muted;
+            
+            // Update icon based on mute state
+            if (video.muted) {
+                icon.classList.remove('fa-volume-up');
+                icon.classList.add('fa-volume-mute');
+            } else {
+                icon.classList.remove('fa-volume-mute');
+                icon.classList.add('fa-volume-up');
+            }
         }
 
         async function swipeLeft() {
@@ -602,39 +774,10 @@
             renderCurrentShort();
         }
 
-        // Touch handlers for all directions
+        // Touch handlers
         document.addEventListener('touchstart', (e) => {
             startX = e.touches[0].clientX;
             startY = e.touches[0].clientY;
-        });
-
-        document.addEventListener('touchmove', (e) => {
-            if (!startX || !startY) return;
-
-            const currentX = e.touches[0].clientX;
-            const currentY = e.touches[0].clientY;
-            const diffX = startX - currentX;
-            const diffY = startY - currentY;
-
-            // Show swipe indicators based on direction
-            const indicators = document.querySelectorAll('.swipe-indicator');
-            indicators.forEach(indicator => indicator.classList.remove('visible'));
-
-            if (Math.abs(diffX) > Math.abs(diffY)) {
-                // Horizontal swipe
-                if (diffX > 50) {
-                    document.querySelector('.swipe-indicator.left').classList.add('visible');
-                } else if (diffX < -50) {
-                    document.querySelector('.swipe-indicator.right').classList.add('visible');
-                }
-            } else {
-                // Vertical swipe
-                if (diffY > 50) {
-                    document.querySelector('.swipe-indicator.up').classList.add('visible');
-                } else if (diffY < -50) {
-                    document.querySelector('.swipe-indicator.down').classList.add('visible');
-                }
-            }
         });
 
         document.addEventListener('touchend', (e) => {
@@ -645,13 +788,10 @@
             const diffX = startX - endX;
             const diffY = startY - endY;
 
-            // Hide all indicators
             const indicators = document.querySelectorAll('.swipe-indicator');
             indicators.forEach(indicator => indicator.classList.remove('visible'));
 
-            // Determine if the swipe was primarily horizontal or vertical
             if (Math.abs(diffX) > Math.abs(diffY)) {
-                // Horizontal swipe
                 if (Math.abs(diffX) > 50) {
                     if (diffX > 0) {
                         swipeLeft();
@@ -660,7 +800,6 @@
                     }
                 }
             } else {
-                // Vertical swipe
                 if (Math.abs(diffY) > 50) {
                     if (diffY > 0) {
                         swipeUp();
@@ -674,25 +813,10 @@
             startY = null;
         });
 
-        // Theme toggle functionality
-        const themeButton = document.querySelector('.theme-button');
-        let isDarkTheme = true;
-
-        themeButton.addEventListener('click', () => {
-            isDarkTheme = !isDarkTheme;
-            if (isDarkTheme) {
-                document.documentElement.style.setProperty('--background-color', '#0f172a');
-                document.documentElement.style.setProperty('--navbar-color', 'rgba(15, 23, 42, 0.95)');
-                document.documentElement.style.setProperty('--secondary-color', '#e2e8f0');
-            } else {
-                document.documentElement.style.setProperty('--background-color', '#f1f5f9');
-                document.documentElement.style.setProperty('--navbar-color', 'rgba(241, 245, 249, 0.95)');
-                document.documentElement.style.setProperty('--secondary-color', '#1e293b');
-            }
-        });
-
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
+            initializeTheme();
+            setupThemeListeners();
             fetchShorts();
         });
 
