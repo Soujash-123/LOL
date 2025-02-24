@@ -136,6 +136,7 @@
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
             background: rgba(15, 23, 42, 0.95);
             border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
         }
 
         .chat-list {
@@ -144,6 +145,13 @@
             border-right: 1px solid rgba(255, 255, 255, 0.1);
             overflow-y: auto;
             background: rgba(15, 23, 42, 0.98);
+            transition: transform 0.3s ease;
+        }
+        .chat-window {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
         }
 
         .chat-item {
@@ -162,8 +170,15 @@
         }
 
         .messages-container {
+            flex: 1;
+            overflow-y: auto;
             padding: 1.5rem;
             background: linear-gradient(to bottom, rgba(15, 23, 42, 0.95), rgba(15, 23, 42, 0.98));
+        }
+
+        .chat-input-container {
+            padding: 1rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .message-bubble {
@@ -281,6 +296,57 @@
                 padding: 2rem;
             }
         }
+        @media (max-width: 768px) {
+            .chat-container {
+                height: calc(100vh - 2rem);
+                margin: 1rem;
+                border-radius: 1rem;
+            }
+
+            .chat-list {
+                position: absolute;
+                width: 100%;
+                z-index: 10;
+                transform: translateX(-100%);
+            }
+
+            .chat-list.show {
+                transform: translateX(0);
+            }
+
+            .chat-window {
+                width: 100%;
+            }
+
+            #chat-header {
+                position: relative;
+            }
+
+            .back-button {
+                display: block;
+                position: absolute;
+                left: 1rem;
+                top: 50%;
+                transform: translateY(-50%);
+                background: none;
+                border: none;
+                color: var(--secondary-color);
+                font-size: 1.25rem;
+                cursor: pointer;
+                padding: 0.5rem;
+            }
+
+            .chat-user-info {
+                margin-left: 3rem;
+            }
+        }
+
+        /* Tablet styles */
+        @media (min-width: 769px) and (max-width: 1024px) {
+            .chat-list {
+                width: 40%;
+            }
+        }
     </style>
 </head>
 <body>
@@ -319,6 +385,13 @@
             <a href="/list_connect" class="nav-link">
                 <i class="fas fa-users"></i>
                 <span>Matches</span>
+            </a>
+            <a href="/music-feed" class="nav-link">
+                <i class="fas fa-headphones"></i>
+                <span>My Music</span>
+            </a>
+            <a href="#" class="nav-link" onclick="navigateToProfile(event)">
+                <i class="fas fa-user"></i><span>Profile</span>
             </a>
             <a href="#" onclick="logout()" class="nav-link">
                 <i class="fas fa-sign-out-alt"></i>
@@ -369,13 +442,18 @@
                 </div>
             </div>
             <div class="chat-window">
-                <div id="chat-header" class="p-4 border-b border-gray-800 flex items-center">
-                    <div class="w-10 h-10 bg-purple-600 rounded-full flex items-center justify-center">
-                        <i class="fas fa-user"></i>
-                    </div>
-                    <div class="ml-4">
-                        <h2 id="chat-user-name" class="font-bold">Select a chat</h2>
-                        <p id="chat-status" class="text-sm text-gray-400">-</p>
+                <div id="chat-header" class="p-4 border-b border-gray-800">
+                    <button class="back-button md:hidden">
+                        <i class="fas fa-arrow-left"></i>
+                    </button>
+                    <div class="chat-user-info flex items-center">
+                        <div class="w-10 h-10 bg-purple-600 rounded-full flex items-center justify-center">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="ml-4">
+                            <h2 id="chat-user-name" class="font-bold">Select a chat</h2>
+                            <p id="chat-status" class="text-sm text-gray-400">-</p>
+                        </div>
                     </div>
                 </div>
                 <div id="messages-container" class="messages-container">
@@ -457,6 +535,19 @@
     </div>
 
     <script>
+         // Navigate to profile
+         async function navigateToProfile(event) {
+            event.preventDefault();
+            try {
+                const response = await fetch('/user/profile');
+                if (!response.ok) throw new Error('Failed to fetch profile');
+                const data = await response.json();
+                window.location.href = `/${data.username}`;
+            } catch (error) {
+                console.error('Error navigating to profile:', error);
+            }
+        }
+
         const themeKeys = {
             primaryColor: '--primary-color',
             secondaryColor: '--secondary-color',
@@ -537,32 +628,54 @@
         let currentChatId = null;
         const currentUserId = "{{ session.user_id }}";  // Get current user ID from session
         
-        // Load a specific chat
+        function showChatList() {
+            document.querySelector('.chat-list').classList.add('show');
+        }
+
+        function hideChatList() {
+            document.querySelector('.chat-list').classList.remove('show');
+        }
+
+        // Modify your existing loadChat function
         async function loadChat(chatId) {
             try {
                 const response = await fetch(`/chat/${chatId}`);
                 if (!response.ok) throw new Error('Failed to fetch chat');
                 const chat = await response.json();
                 
-                // Update current chat ID
                 currentChatId = chatId;
-                
-                // Update UI
                 updateChatUI(chat);
                 
-                // Enable input
                 document.getElementById('chat-input').disabled = false;
                 document.getElementById('send-message').disabled = false;
                 
-                // Mark this chat as active
                 document.querySelectorAll('.chat-item').forEach(item => {
                     item.classList.remove('active-chat');
                 });
                 document.querySelector(`[data-chat-id="${chatId}"]`)?.classList.add('active-chat');
+                
+                // Hide chat list on mobile after selecting a chat
+                if (window.innerWidth <= 768) {
+                    hideChatList();
+                }
             } catch (error) {
                 console.error('Error loading chat:', error);
             }
         }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Add these to your existing DOMContentLoaded listener
+            const backButton = document.querySelector('.back-button');
+            
+            if (backButton) {
+                backButton.addEventListener('click', showChatList);
+            }
+
+            // Show chat list by default on mobile
+            if (window.innerWidth <= 768) {
+                showChatList();
+            }
+        });
 
         // Send a message
         async function sendMessage(content) {

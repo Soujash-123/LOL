@@ -43,6 +43,7 @@ try:
     connections_collection = db['connections']
     fs = GridFS(db)
     posts_collection = db["posts"]
+    stories_collection = db["stories"]
 
     # Create indexes
     users_collection.create_index('username', unique=True)
@@ -882,6 +883,100 @@ def handle_feed():
             }
 
             result = posts_collection.insert_one(post_data)
+            if not result.inserted_id:
+                cloudinary.uploader.destroy(upload_result['public_id'])
+                return jsonify({"error": "Failed to create post"}), 500
+
+            post_data.pop('_id', None)
+            return jsonify(post_data), 201
+
+        except Exception as e:
+            return jsonify({"error": "An error occurred creating post"}), 500
+        
+@app.route('/stories', methods=['GET', 'POST'])
+@login_required
+def handle_stories():
+    if request.method == 'GET':
+        try:
+            last_update = request.args.get('last_update', None)
+            user_id = session.get('user_id')
+            user_data = users_collection.find_one({"user_id": user_id})
+            
+            if not user_data:
+                return jsonify({"error": "User not found"}), 404
+            
+            query = {}
+            if last_update:
+                query['created_at'] = {'$gt': datetime.fromisoformat(last_update)}
+            
+            all_posts = list(stories_collection.find(query, {
+                '_id': 0,
+                'username': 1,
+                'created_at': 1,
+                'file_url': 1,
+                'likes': 1,
+                'comment_count': 1,
+                'content': 1,
+                'type': 1,
+                'user_id': 1
+            }))
+            
+            filtered_posts = [post for post in all_posts if (post['user_id'] != user_id)]
+            #print(filtered_posts)
+            super_filter=[]
+            for i in filtered_posts:
+                if i['type']=='image':
+                    super_filter.append(i)
+            print(super_filter)
+            return jsonify({
+                'posts': super_filter,
+                'last_update': datetime.now().isoformat()
+            }), 200
+        except Exception as e:
+            return jsonify({"error": "An error occurred while fetching posts"}), 500
+
+    elif request.method == 'POST':
+        try:
+            post_type = request.form.get('type')
+            content = request.form.get('content', '')
+            file = request.files.get('post-file')
+
+            if not file:
+                return jsonify({"error": "No file provided"}), 400
+            if not post_type:
+                return jsonify({"error": "Post type is required"}), 400
+
+            allowed_image_types = {'image/jpeg', 'image/png', 'image/gif'}
+            allowed_audio_types = {'audio/mpeg', 'audio/wav', 'audio/mp3'}
+            allowed_video_types = {'video/mp4', 'video/mpeg', 'video/ogg'}
+            file_type = file.content_type
+
+            if post_type == 'image' and file_type not in allowed_image_types:
+                return jsonify({"error": "Invalid image format"}), 400
+            elif post_type == 'audio' and file_type not in allowed_audio_types:
+                return jsonify({"error": "Invalid audio format"}), 400
+            elif post_type == 'video' and file_type not in allowed_video_types:
+                return jsonify({"error": "Invalid video format"}), 400
+
+            upload_result = cloudinary.uploader.upload(file, resource_type="auto")
+            if not upload_result:
+                return jsonify({"error": "Failed to upload file"}), 500
+
+            post_data = {
+                "post_id": str(uuid.uuid4()),
+                "user_id": session['user_id'],
+                "username": session['username'],
+                "type": post_type,
+                "content": content,
+                "file_url": upload_result['secure_url'],
+                "file_id": upload_result['public_id'],
+                "created_at": datetime.utcnow(),
+                "likes": 0,
+                "likes_by": [],
+                "comment_count": 0
+            }
+
+            result = stories_collection.insert_one(post_data)
             if not result.inserted_id:
                 cloudinary.uploader.destroy(upload_result['public_id'])
                 return jsonify({"error": "Failed to create post"}), 500

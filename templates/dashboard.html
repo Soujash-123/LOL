@@ -389,6 +389,56 @@
     opacity: 1;
     transform: translate(-50%, -50%) scale(1.1);
 }
+.stories-container {
+    position: relative;
+    margin-left: 240px; /* Match the width of vertical nav */
+}
+
+.stories-scroll-container {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.stories-scroll-container::-webkit-scrollbar {
+    display: none;
+}
+
+.story-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.story-ring {
+    background: linear-gradient(45deg, #817cc7 0%, #6b7ace 25%, #2f77e4 50%, #0b46e9 75%, #bc1888 100%);
+}
+
+.story-preview {
+    position: relative;
+    overflow: hidden;
+}
+
+.story-preview img {
+    width: 56px;
+    height: 56px;
+    object-fit: cover;
+}
+
+#story-viewer .story-media-container {
+    aspect-ratio: 9/16;
+    background: #000;
+}
+
+#story-viewer video {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+@media (max-width: 768px) {
+    .stories-container {
+        margin-left: 0; /* Remove margin when nav is hidden on mobile */
+    }
+}
     </style>
 </head>
 <body>
@@ -484,12 +534,101 @@
                 <i class="fas fa-users"></i>
                 <span>Matches</span>
             </a>
+            <a href="/music-feed" class="nav-link">
+                <i class="fas fa-headphones"></i>
+                <span>My Music</span>
+            </a>
+            <a href="#" class="nav-link" onclick="navigateToProfile(event)">
+                <i class="fas fa-user"></i><span>Profile</span>
+            </a>
             <a href="#" onclick="logout()" id="logout-button" class="nav-link">
                 <i class="fas fa-sign-out-alt"></i>
                 <span>Logout</span>
             </a>
+            
         </div>
     </nav>
+
+    <!-- Stories Section -->
+    <div class="stories-container glass-effect mx-4 mt-4 p-4 rounded-lg">
+        <div class="stories-scroll-container flex space-x-4 overflow-x-auto pb-2">
+            <!-- Add Story Button -->
+            <div class="story-item flex-shrink-0 cursor-pointer" onclick="openStoryUpload()">
+                <div class="story-ring bg-gradient-to-r from-blue-500 to-pink-500 p-0.5 rounded-full">
+                    <div class="story-preview bg-gray-800 rounded-full p-1">
+                        <div class="w-14 h-14 rounded-full flex items-center justify-center bg-gray-700">
+                            <i class="fas fa-plus text-white text-xl"></i>
+                        </div>
+                    </div>
+                </div>
+                <p class="text-center text-sm mt-1 text-gray-300">Add Story</p>
+            </div>
+            
+            <!-- Stories will be dynamically inserted here -->
+        </div>
+    </div>
+
+    <div id="posts-grid" class="post-grid">
+        <!-- Posts will be dynamically inserted here -->
+    </div>
+</main>
+
+<!-- Add Story Modal -->
+<div id="story-upload-modal" class="fixed inset-0 bg-black bg-opacity-75 hidden z-50 flex items-center justify-center">
+    <div class="relative w-full max-w-md mx-4 glass-effect rounded-lg p-6">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="text-lg font-semibold">Add Story</h3>
+            <button onclick="closeStoryUpload()" class="text-gray-400 hover:text-white">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <div id="story-preview-container" class="border-2 border-dashed border-gray-700 rounded-lg p-4 flex flex-col items-center justify-center h-64 relative overflow-hidden cursor-pointer">
+            <video id="story-preview" class="hidden max-h-full max-w-full absolute" controls></video>
+            <div id="story-upload-instructions" class="text-center">
+                <i class="fas fa-film text-4xl text-gray-500 mb-3"></i>
+                <p class="mb-2">Click to upload a video story</p>
+                <p class="text-sm text-gray-500">15 seconds maximum</p>
+            </div>
+            <input type="file" id="story-video-upload" class="hidden" accept="video/*">
+        </div>
+
+        <button onclick="uploadStory()" class="w-full mt-4 py-3 bg-gradient-to-r from-blue-500 to-pink-500 text-white rounded-lg hover:opacity-90 transition-opacity">
+            Share Story
+        </button>
+    </div>
+</div>
+
+<!-- Story Viewer Modal -->
+<div id="story-viewer" class="fixed inset-0 bg-black hidden z-50">
+    <div class="h-full flex items-center justify-center relative">
+        <!-- Story content -->
+        <div class="w-full max-w-sm mx-4">
+            <!-- Story header -->
+            <div class="flex items-center mb-4">
+                <div class="w-10 h-10 rounded-full bg-gray-600 flex-shrink-0"></div>
+                <div class="ml-3">
+                    <p class="text-white font-semibold story-username">Username</p>
+                    <p class="text-gray-400 text-sm story-time">Just now</p>
+                </div>
+                <!-- Repositioned close button -->
+                <button onclick="closeStoryViewer()" class="ml-auto text-white text-xl bg-black bg-opacity-50 hover:bg-opacity-75 rounded-full w-8 h-8 flex items-center justify-center transition-all">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <!-- Progress bar -->
+            <div class="story-progress bg-gray-700 h-1 mb-4 rounded">
+                <div class="story-progress-bar bg-white h-full w-0 rounded transition-all duration-100"></div>
+            </div>
+            
+            <!-- Story media -->
+            <div class="story-media-container relative rounded-lg overflow-hidden">
+                <video id="story-video" class="w-full" playsinline></video>
+            </div>
+        </div>
+    </div>
+</div>
 
     <!-- Main Content -->
     <main class="main-content">
@@ -626,7 +765,221 @@
     </div>
     
 
-    <script>// Function to check video duration
+    <script>
+        async function navigateToProfile(event) {
+            event.preventDefault();
+            try {
+                const response = await fetch('/user/profile');
+                if (!response.ok) throw new Error('Failed to fetch profile');
+                const data = await response.json();
+                window.location.href = `/${data.username}`;
+            } catch (error) {
+                console.error('Error navigating to profile:', error);
+            }
+        }
+    // Story Management
+let stories = [];
+let currentStoryIndex = 0;
+
+async function fetchStories() {
+    try {
+        const response = await fetch('/shorts');
+        const data = await response.json();
+        
+        if (data.posts) {
+            stories = data.posts;
+            renderStories();
+        }
+    } catch (error) {
+        console.error('Error fetching stories:', error);
+    }
+}
+
+function renderStories() {
+    const storiesContainer = document.querySelector('.stories-scroll-container');
+    const existingStories = Array.from(storiesContainer.children);
+    const addStoryButton = existingStories[0]; // Keep the "Add Story" button
+    
+    // Remove old stories but keep the "Add Story" button
+    storiesContainer.innerHTML = '';
+    storiesContainer.appendChild(addStoryButton);
+    
+    stories.forEach((story, index) => {
+        const storyElement = document.createElement('div');
+        storyElement.className = 'story-item flex-shrink-0 cursor-pointer';
+        storyElement.onclick = () => openStoryViewer(index);
+        
+        storyElement.innerHTML = `
+            <div class="story-ring p-0.5 rounded-full">
+                <div class="story-preview bg-gray-800 rounded-full p-1">
+                    <div class="w-14 h-14 rounded-full overflow-hidden">
+                        <video src="${story.file_url}" class="w-full h-full object-cover"></video>
+                    </div>
+                </div>
+            </div>
+            <p class="text-center text-sm mt-1 text-gray-300">${story.username}</p>
+        `;
+        
+        storiesContainer.appendChild(storyElement);
+    });
+}
+
+// Story Upload
+function openStoryUpload() {
+    document.getElementById('story-upload-modal').classList.remove('hidden');
+}
+
+function closeStoryUpload() {
+    document.getElementById('story-upload-modal').classList.add('hidden');
+    resetStoryUpload();
+}
+
+function resetStoryUpload() {
+    const preview = document.getElementById('story-preview');
+    const instructions = document.getElementById('story-upload-instructions');
+    const input = document.getElementById('story-video-upload');
+    
+    preview.classList.add('hidden');
+    preview.src = '';
+    instructions.classList.remove('hidden');
+    input.value = '';
+}
+
+// Story preview container click handler
+document.getElementById('story-preview-container').addEventListener('click', () => {
+    document.getElementById('story-video-upload').click();
+});
+
+// Story video upload handler
+document.getElementById('story-video-upload').addEventListener('change', async (e) => {
+    if (e.target.files && e.target.files[0]) {
+        const file = e.target.files[0];
+        try {
+            const video = document.getElementById('story-preview');
+            video.src = URL.createObjectURL(file);
+            
+            video.onloadedmetadata = function() {
+                if (video.duration > 15) {
+                    alert('Video must be 15 seconds or shorter');
+                    resetStoryUpload();
+                    return;
+                }
+                
+                video.classList.remove('hidden');
+                document.getElementById('story-upload-instructions').classList.add('hidden');
+            };
+        } catch (error) {
+            alert('Error uploading video');
+            resetStoryUpload();
+        }
+    }
+});
+
+async function uploadStory() {
+    const file = document.getElementById('story-video-upload').files[0];
+    if (!file) {
+        alert('Please select a video');
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('type', 'video');
+    formData.append('post-file', file);
+    formData.append('content', 'Story');
+    
+    try {
+        const response = await fetch('/posts', {
+            method: 'POST',
+            body: formData
+        });
+        
+        if (response.ok) {
+            closeStoryUpload();
+            fetchStories();
+            alert('Story uploaded successfully!');
+        } else {
+            alert('Failed to upload story');
+        }
+    } catch (error) {
+        console.error('Error uploading story:', error);
+        alert('Failed to upload story');
+    }
+}
+
+// Story Viewer
+let storyProgress;
+let currentStoryVideo;
+
+// Update the existing openStoryViewer function
+function openStoryViewer(index) {
+    currentStoryIndex = index;
+    const story = stories[currentStoryIndex];
+    
+    document.getElementById('story-viewer').classList.remove('hidden');
+    document.querySelector('.story-username').textContent = story.username;
+    document.querySelector('.story-time').textContent = new Date(story.created_at).toLocaleDateString();
+    
+    const video = document.getElementById('story-video');
+    video.src = story.file_url;
+    video.play();
+    
+    updateNavigationButtons();
+    startStoryProgress();
+}
+
+function closeStoryViewer() {
+    document.getElementById('story-viewer').classList.add('hidden');
+    const video = document.getElementById('story-video');
+    video.pause();
+    video.src = '';
+    stopStoryProgress();
+}
+
+function startStoryProgress() {
+    const progressBar = document.querySelector('.story-progress-bar');
+    progressBar.style.width = '0%';
+    
+    const video = document.getElementById('story-video');
+    video.onloadedmetadata = () => {
+        const duration = video.duration * 1000; // Convert to milliseconds
+        
+        progressBar.style.transition = `width ${duration}ms linear`;
+        progressBar.style.width = '100%';
+        
+        storyProgress = setTimeout(() => {
+            if (currentStoryIndex < stories.length - 1) {
+                openStoryViewer(currentStoryIndex + 1);
+            } else {
+                closeStoryViewer();
+            }
+        }, duration);
+    };
+}
+
+function stopStoryProgress() {
+    if (storyProgress) {
+        clearTimeout(storyProgress);
+    }
+}
+
+// Add story navigation with arrow keys
+document.addEventListener('keydown', (e) => {
+    if (document.getElementById('story-viewer').classList.contains('hidden')) return;
+    
+    if (e.key === 'ArrowLeft' && currentStoryIndex > 0) {
+        openStoryViewer(currentStoryIndex - 1);
+    } else if (e.key === 'ArrowRight' && currentStoryIndex < stories.length - 1) {
+        openStoryViewer(currentStoryIndex + 1);
+    } else if (e.key === 'Escape') {
+        closeStoryViewer();
+    }
+});
+
+
+    
+    
+    
+    // Function to check video duration
         function checkVideoDuration(file) {
             return new Promise((resolve, reject) => {
                 const video = document.createElement('video');
@@ -1215,6 +1568,7 @@
             initializeTheme();
             setupThemeListeners();
             fetchPosts();
+            fetchStories();
 
             // Mobile navigation
             document.querySelector('.mobile-nav-toggle').addEventListener('click', () => {

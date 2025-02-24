@@ -406,6 +406,13 @@
                 <i class="fas fa-users"></i>
                 <span>Matches</span>
             </a>
+            <a href="/music-feed" class="nav-link">
+                <i class="fas fa-headphones"></i>
+                <span>My Music</span>
+            </a>
+            <a href="#" class="nav-link" onclick="navigateToProfile(event)">
+                <i class="fas fa-user"></i><span>Profile</span>
+            </a>
             <a href="#" onclick="logout()" class="nav-link">
                 <i class="fas fa-sign-out-alt"></i>
                 <span>Logout</span>
@@ -485,6 +492,17 @@
     </div>
 
     <script>
+        async function navigateToProfile(event) {
+            event.preventDefault();
+            try {
+                const response = await fetch('/user/profile');
+                if (!response.ok) throw new Error('Failed to fetch profile');
+                const data = await response.json();
+                window.location.href = `/${data.username}`;
+            } catch (error) {
+                console.error('Error navigating to profile:', error);
+            }
+        }
         const themeKeys = {
             primaryColor: '--primary-color',
             secondaryColor: '--secondary-color',
